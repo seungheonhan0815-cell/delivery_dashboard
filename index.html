@@ -154,7 +154,6 @@ async function loadCSV(){
     factory:(c[8] || "").trim(),
     reason:(c[9] || "").trim(),
     partialReason:(c[10] || "").trim(),
-    qualityIssueRemark:(c[11] || "").trim()
   };
 });
 
@@ -350,7 +349,6 @@ function renderTable(){
         <td>${r.schedule}</td>
         <td>${r.actual}</td>
         <td class="text-wrap">${safeText(tPartialReason(r.partialReason))}</td>
-        <td class="text-wrap">${safeText(r.qualityIssueRemark)}</td>
         <td>${r.delayDays}일</td>
       </tr>`;
   });
