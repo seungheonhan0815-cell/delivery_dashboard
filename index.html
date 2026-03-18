@@ -349,13 +349,13 @@ function renderPartialTable(){
   td.innerHTML = '';
   rows.forEach(r=>{
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].qty) : '-';
-const s1Date = r.shipments[1] ? r.shipments[1].schedule : '-';
+const s1Date = r.shipments[1] ? r.shipments[1].actual : '-';
 
 const s2Qty = r.shipments[2] ? fmt(r.shipments[2].qty) : '-';
-const s2Date = r.shipments[2] ? r.shipments[2].schedule : '-';
+const s2Date = r.shipments[2] ? r.shipments[2].actual : '-';
 
 const s3Qty = r.shipments[3] ? fmt(r.shipments[3].qty) : '-';
-const s3Date = r.shipments[3] ? r.shipments[3].schedule : '-';
+const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
     const targetQty = PO_TARGET[r.poNo] || 0;
     const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
     td.innerHTML += `
