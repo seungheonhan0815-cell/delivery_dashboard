@@ -160,11 +160,6 @@ renderFactory();
 renderFactoryRate();
 renderModel();
 renderReason();
-    const MONTH_TARGET = {
-  "2026-01": 50000,
-  "2026-02": 60000,
-  "2026-03": 55000,
-};
 renderMonth();
 renderPartialTable();
 renderTable();
@@ -196,6 +191,11 @@ const PARTIAL_REASON_KO = {
   "Production delay":"생산 지연",
   "Quality + capacity":"품질 + 생산능력",
   "None":"없음"
+};
+  const MONTH_TARGET = {
+  "2026-01": 50000,
+  "2026-02": 60000,
+  "2026-03": 55000,
 };
 
 function fmt(n){return Number(n).toLocaleString()}
@@ -304,7 +304,6 @@ function renderReason(){
   });
   bar(document.getElementById('barReason'),reason,'#8e24aa');
 }
-function renderMonth(){
   function renderMonth(){
   const month={};
 
