@@ -327,10 +327,11 @@ const rateText = target ? rateNum.toFixed(1) : "-";
         <div class="bbg">
           <div class="bfill" style="width:${Math.min(rateNum,100)}%;background:#1b8f5a"></div>
         </div>
-        <div class="bval">
-          ${fmt(actual)} / ${fmt(target)}<br>
-          <span style="font-size:11px;color:#666">${rateText}${target ? "%" : ""}</span>
-        </div>
+        <div class="bval" style="width:180px; text-align:left;">
+  <div>실제 선적 수량: ${fmt(actual)}</div>
+  <div>목표 수량: ${fmt(target)}</div>
+  <div>달성율: ${rateText}${target ? "%" : ""}</div>
+</div>
       </div>
     `;
   }
