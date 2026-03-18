@@ -160,6 +160,11 @@ renderFactory();
 renderFactoryRate();
 renderModel();
 renderReason();
+    const MONTH_TARGET = {
+  "2026-01": 50000,
+  "2026-02": 60000,
+  "2026-03": 55000,
+};
 renderMonth();
 renderPartialTable();
 renderTable();
@@ -300,9 +305,35 @@ function renderReason(){
   bar(document.getElementById('barReason'),reason,'#8e24aa');
 }
 function renderMonth(){
+  function renderMonth(){
   const month={};
-  DATA.forEach(r=>{ const m=monthKey(r.actual); month[m]=(month[m]||0)+r.qty; });
-  bar(document.getElementById('barMonth'),month,'#1b8f5a');
+
+  DATA.forEach(r=>{
+    const m=monthKey(r.actual);
+    month[m]=(month[m]||0)+r.qty;
+  });
+
+  const container = document.getElementById('barMonth');
+  container.innerHTML = "";
+
+  for(const m in month){
+    const actual = month[m];
+    const target = MONTH_TARGET[m] || 0;
+    const rate = target ? (actual/target*100).toFixed(1) : "-";
+
+    container.innerHTML += `
+      <div class="brow">
+        <div class="blbl">${m}</div>
+        <div class="bbg">
+          <div class="bfill" style="width:${Math.min(rate,100)}%;background:#1b8f5a"></div>
+        </div>
+        <div class="bval">
+          ${fmt(actual)} / ${fmt(target)}<br>
+          <span style="font-size:11px;color:#666">${rate}%</span>
+        </div>
+      </div>
+    `;
+  }
 }
 function renderPartialTable(){
   const rows = groupPO();
