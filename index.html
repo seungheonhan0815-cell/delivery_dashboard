@@ -94,9 +94,12 @@ th{background:#fafbff}
         <th>PO</th>
         <th>품목</th>
         <th>공장</th>
-        <th>1차 수량 / 일정</th>
-        <th>2차 수량 / 일정</th>
-        <th>3차 수량 / 일정</th>
+        <th>1차 수량</th>
+<th>1차 일정</th>
+<th>2차 수량</th>
+<th>2차 일정</th>
+<th>3차 수량</th>
+<th>3차 일정</th>
         <th>총 수량</th>
         <th>분할 선적 사유</th>
         <th>상태</th>
@@ -340,18 +343,26 @@ function renderPartialTable(){
   const td = document.getElementById('partialTable');
   td.innerHTML = '';
   rows.forEach(r=>{
-    const s1 = r.shipments[1] ? `${fmt(r.shipments[1].qty)} / ${r.shipments[1].schedule}` : '-';
-    const s2 = r.shipments[2] ? `${fmt(r.shipments[2].qty)} / ${r.shipments[2].schedule}` : '-';
-    const s3 = r.shipments[3] ? `${fmt(r.shipments[3].qty)} / ${r.shipments[3].schedule}` : '-';
+    const s1Qty = r.shipments[1] ? fmt(r.shipments[1].qty) : '-';
+const s1Date = r.shipments[1] ? r.shipments[1].schedule : '-';
+
+const s2Qty = r.shipments[2] ? fmt(r.shipments[2].qty) : '-';
+const s2Date = r.shipments[2] ? r.shipments[2].schedule : '-';
+
+const s3Qty = r.shipments[3] ? fmt(r.shipments[3].qty) : '-';
+const s3Date = r.shipments[3] ? r.shipments[3].schedule : '-';
     const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
     td.innerHTML += `
       <tr>
         <td>${r.poNo}</td>
         <td>${r.item}</td>
         <td>${r.factory}</td>
-        <td>${s1}</td>
-        <td>${s2}</td>
-        <td>${s3}</td>
+        <td>${s1Qty}</td>
+<td>${s1Date}</td>
+<td>${s2Qty}</td>
+<td>${s2Date}</td>
+<td>${s3Qty}</td>
+<td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
         <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
         <td class="${hasDelay?'status-delay':'status-ok'}">${hasDelay?'지연':'정상'}</td>
