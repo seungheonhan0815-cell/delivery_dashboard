@@ -99,7 +99,6 @@ th{background:#fafbff}
         <th>3차 수량 / 일정</th>
         <th>총 수량</th>
         <th>분할 선적 사유</th>
-        <th>품질 이슈 비고</th>
         <th>상태</th>
       </tr>
     </thead>
@@ -120,7 +119,6 @@ th{background:#fafbff}
         <th>계획일</th>
         <th>실적일</th>
         <th>분할 선적 사유</th>
-        <th>품질 이슈 비고</th>
         <th>지연</th>
       </tr>
     </thead>
@@ -221,16 +219,14 @@ function bar(container,data,color,suffix=""){
 function groupPO(){
   const map = {};
   DATA.forEach(r=>{
-    if(!map[r.poNo]) map[r.poNo] = {poNo:r.poNo,item:r.item,factory:r.factory,totalQty:0,shipments:{},partialReasons:new Set(),qualityRemarks:[]};
+    if(!map[r.poNo]) map[r.poNo] = {poNo:r.poNo,item:r.item,factory:r.factory,totalQty:0,shipments:{},partialReasons:new Set()};
     map[r.poNo].totalQty += r.qty;
     map[r.poNo].shipments[r.shipmentNo] = r;
     if(r.partialReason && r.partialReason !== 'None') map[r.poNo].partialReasons.add(tPartialReason(r.partialReason));
-    if(r.qualityIssueRemark && r.qualityIssueRemark.trim()) map[r.poNo].qualityRemarks.push(r.qualityIssueRemark.trim());
   });
   return Object.values(map).map(r=>({
     ...r,
     partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
-    qualityRemarkSummary: r.qualityRemarks.length ? [...new Set(r.qualityRemarks)].join(' / ') : '-'
   }));
 }
 function renderKPI(){
@@ -261,7 +257,6 @@ function renderPartialKPI(){
     const delay = rows.filter(x=>x.delayDays>0).length;
     const otd = rows.length ? ((rows.filter(x=>x.delayDays<=0).length/rows.length)*100).toFixed(1) : '0.0';
     const lastSchedule = rows.length ? rows.map(x=>x.schedule).sort().slice(-1)[0] : '-';
-    const qualityLegs = rows.filter(x=>x.qualityIssueRemark && x.qualityIssueRemark.trim()).length;
     return `
       <div class="partial-box">
         <div class="partial-hd">
@@ -275,7 +270,6 @@ function renderPartialKPI(){
           <div class="meta"><div class="lbl">총 수량</div><div class="val">${fmt(qty)}</div><div class="sub">${no}차 누적 수량</div></div>
           <div class="meta"><div class="lbl">OTD</div><div class="val">${otd}%</div><div class="sub">지연 ${delay}건</div></div>
           <div class="meta"><div class="lbl">최종 계획일</div><div class="val" style="font-size:16px">${lastSchedule}</div><div class="sub">가장 늦은 계획일</div></div>
-          <div class="meta"><div class="lbl">품질 이슈 건수</div><div class="val">${qualityLegs}</div><div class="sub">비고 입력 건수</div></div>
         </div>
       </div>`;
   }).join('');
@@ -329,7 +323,6 @@ function renderPartialTable(){
         <td>${s3}</td>
         <td>${fmt(r.totalQty)}</td>
         <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
-        <td class="text-wrap">${safeText(r.qualityRemarkSummary)}</td>
         <td class="${hasDelay?'status-delay':'status-ok'}">${hasDelay?'지연':'정상'}</td>
       </tr>`;
   });
