@@ -318,17 +318,18 @@ function renderReason(){
   for(const m in month){
     const actual = month[m];
     const target = MONTH_TARGET[m] || 0;
-    const rate = target ? (actual/target*100).toFixed(1) : "-";
+    const rateNum = target ? (actual / target * 100) : 0;
+const rateText = target ? rateNum.toFixed(1) : "-";
 
     container.innerHTML += `
       <div class="brow">
         <div class="blbl">${m}</div>
         <div class="bbg">
-          <div class="bfill" style="width:${Math.min(rate,100)}%;background:#1b8f5a"></div>
+          <div class="bfill" style="width:${Math.min(rateNum,100)}%;background:#1b8f5a"></div>
         </div>
         <div class="bval">
           ${fmt(actual)} / ${fmt(target)}<br>
-          <span style="font-size:11px;color:#666">${rate}%</span>
+          <span style="font-size:11px;color:#666">${rateText}${target ? "%" : ""}</span>
         </div>
       </div>
     `;
