@@ -327,7 +327,7 @@ function groupPO(){
 function renderKPI(){
   const totalPO = uniqueCount(DATA, "poNo");
   const totalQty = DATA.reduce((s, x) => s + x.qty, 0);
-
+const completed = DATA.filter(x => x.actual && x.actual !== "-");
   const ontimeShipment = DATA.filter(x => x.delayDays <= 0).length;
   const totalShipment = DATA.length;
   const delayPO = new Set(DATA.filter(x => x.delayDays > 0).map(x => x.poNo)).size;
