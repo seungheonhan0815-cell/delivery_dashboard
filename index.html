@@ -170,8 +170,17 @@ async function loadCSV(){
   factory: (c[15] || "").trim(),
   reason: (c[16] || "").trim(),
   partialReason: (c[17] || "").trim(),
-};
+  };
+});
+
 renderKPI();
+renderFactory();
+renderFactoryRate();
+renderModel();
+renderReason();
+renderMonth();
+renderPartialTable();
+renderTable();
 renderFactory();
 renderFactoryRate();
 renderModel();
