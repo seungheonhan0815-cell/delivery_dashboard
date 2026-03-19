@@ -216,9 +216,7 @@ const PARTIAL_REASON_KO = {
   "2026. 3": 30000,
   "2026. 4": 40000,
 };
-const PO_TARGET = {
-  "7ARNCB96NK0001": 4560,
-};
+
 function fmt(n){return Number(n).toLocaleString()}
 function monthKey(date){return date.substring(0,7)}
 function uniqueCount(arr,key){return new Set(arr.map(x=>x[key])).size}
@@ -266,7 +264,7 @@ function groupPO(){
       };
     }
 
-    map[key].totalQty += r.qty;
+    map[key].totalQty += r.shipmentQty;
     map[key].shipments[r.shipmentNo] = r;
 
     if(r.partialReason && r.partialReason !== 'None') {
@@ -356,7 +354,7 @@ function renderReason(){
 
   DATA.forEach(r=>{
     const m=monthKey(r.actual);
-    month[m]=(month[m]||0)+r.qty;
+    month[m] = (month[m] || 0) + r.shipmentQty;
   });
 
   const container = document.getElementById('barMonth');
@@ -389,16 +387,15 @@ function renderPartialTable(){
   td.innerHTML = '';
 
   rows.forEach(r=>{
-    const s1Qty = r.shipments[1] ? fmt(r.shipments[1].qty) : '-';
+    const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : '-';
     const s1Date = r.shipments[1] ? r.shipments[1].actual : '-';
 
-    const s2Qty = r.shipments[2] ? fmt(r.shipments[2].qty) : '-';
+    const s2Qty = r.shipments[2] ? fmt(r.shipments[2].shipmentQty) : '-';
     const s2Date = r.shipments[2] ? r.shipments[2].actual : '-';
 
-    const s3Qty = r.shipments[3] ? fmt(r.shipments[3].qty) : '-';
+    const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : '-';
     const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
-
-    const targetQty = PO_TARGET[r.poNo] || 0;
+    const targetQty = r.qty || 0;
     const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
 
     td.innerHTML += `
