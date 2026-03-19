@@ -252,8 +252,10 @@ function groupPO(){
   const map = {};
 
   DATA.forEach(r=>{
-    if(!map[r.poNo]) {
-      map[r.poNo] = {
+    const key = `${r.poNo}__${r.color}`;
+
+    if(!map[key]) {
+      map[key] = {
         nr: r.nr,
         poNo: r.poNo,
         item: r.item,
@@ -269,6 +271,20 @@ function groupPO(){
         partialReasons: new Set()
       };
     }
+
+    map[key].totalQty += r.qty;
+    map[key].shipments[r.shipmentNo] = r;
+
+    if(r.partialReason && r.partialReason !== 'None') {
+      map[key].partialReasons.add(tPartialReason(r.partialReason));
+    }
+  });
+
+  return Object.values(map).map(r => ({
+    ...r,
+    partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
+  }));
+}
 
     map[r.poNo].totalQty += r.qty;
     map[r.poNo].shipments[r.shipmentNo] = r;
