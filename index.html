@@ -243,8 +243,12 @@ function bar(container,data,color,suffix=""){
 }
 function groupPO(){
   const map = {};
-
-  DATA.forEach(r=>{
+const poTotalMap = {};
+  DATA.forEach(r => {
+  if (!poTotalMap[r.poNo] || poTotalMap[r.poNo] < r.total) {
+    poTotalMap[r.poNo] = r.total;
+  }
+});
     const key = `${r.poNo}__${r.color}`;
 
     if(!map[key]) {
