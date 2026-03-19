@@ -471,12 +471,202 @@ const inboundStatus = getInboundStatus(r.inboundPlan);
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
         <td>${achievementRate === '-' ? '-' : achievementRate + '%'}</td>
+                total: poTotalMap[r.poNo] || r.total,
+        qty: r.qty,
+        color: r.color,
+        poIssueDate: r.poIssueDate,
+        etdVN: r.etdVN,
+        inboundPlan: r.inboundPlan,
+        orderType: r.orderType,
+        factory: r.factory,
+        totalQty: 0,
+        shipments: {},
+        partialReasons: new Set()
+      };
+    }
+
+    map[key].totalQty += r.shipmentQty;
+    map[key].shipments[r.shipmentNo] = r;
+
+    if(r.partialReason && r.partialReason !== 'None') {
+      map[key].partialReasons.add(tPartialReason(r.partialReason));
+    }
+  });
+
+  return Object.values(map).map(r => ({
+    ...r,
+    partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
+  }));
+}
+
+    
+function renderKPI(){
+  const totalPO = uniqueCount(DATA,'poNo');
+  const totalQty = DATA.reduce((s,x)=>s+x.qty,0);
+
+  const delayShipment = DATA.filter(x=>x.delayDays>0).length;
+  const ontimeShipment = DATA.filter(x=>x.delayDays<=0).length;
+  const totalShipment = DATA.length;
+
+  const delayPO = new Set(DATA.filter(x=>x.delayDays>0).map(x=>x.poNo)).size;
+
+  const otdRate = totalShipment ? ((ontimeShipment/totalShipment)*100).toFixed(1) : '0.0';
+  const delayPORate = totalPO ? ((delayPO/totalPO)*100).toFixed(1) : '0.0';
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="card"><div class="kpi-label">총 PO 수</div><div class="kpi-val">${fmt(totalPO)}</div><div class="kpi-sub">고유 PO 기준</div></div>
+    <div class="card"><div class="kpi-label">총 수량</div><div class="kpi-val">${fmt(totalQty)}</div><div class="kpi-sub">전체 선적 수량</div></div>
+    <div class="card"><div class="kpi-label">OTD</div><div class="kpi-val">${fmt(ontimeShipment)}건 / ${otdRate}%</div><div class="kpi-sub">선적 차수 기준</div></div>
+    <div class="card"><div class="kpi-label">지연 PO</div><div class="kpi-val">${fmt(delayPO)}건 / ${delayPORate}%</div><div class="kpi-sub">고유 PO 기준</div></div>
+  `;
+}
+function renderPartialKPI(){
+  const rounds = [1,2,3];
+  document.getElementById('partialKpiGrid').innerHTML = rounds.map(no=>{
+    const rows = DATA.filter(x=>x.shipmentNo===no);
+    const qty = rows.reduce((s,x)=>s+x.qty,0);
+    const delay = rows.filter(x=>x.delayDays>0).length;
+    const otd = rows.length ? ((rows.filter(x=>x.delayDays<=0).length/rows.length)*100).toFixed(1) : '0.0';
+    const lastSchedule = rows.length ? rows.map(x=>x.schedule).sort().slice(-1)[0] : '-';
+    return `
+      <div class="partial-box">
+        <div class="partial-hd">
+          <div>
+            <div class="partial-name">${no}차 선적</div>
+            <div class="kpi-sub">수량 / 일정 KPI</div>
+          </div>
+          <div class="partial-chip">${rows.length}건</div>
+        </div>
+        <div class="partial-meta">
+          <div class="meta"><div class="lbl">총 수량</div><div class="val">${fmt(qty)}</div><div class="sub">${no}차 누적 수량</div></div>
+          <div class="meta"><div class="lbl">OTD</div><div class="val">${otd}%</div><div class="sub">지연 ${delay}건</div></div>
+          <div class="meta"><div class="lbl">최종 계획일</div><div class="val" style="font-size:16px">${lastSchedule}</div><div class="sub">가장 늦은 계획일</div></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+function renderFactory(){
+  const delay={};
+  DATA.filter(x=>x.delayDays>0).forEach(r=>{ delay[r.factory]=(delay[r.factory]||0)+1; });
+  bar(document.getElementById('barFactory'),delay,'#c62828');
+}
+function renderFactoryRate(){
+  const total={}, delay={};
+  DATA.forEach(r=>{ total[r.factory]=(total[r.factory]||0)+1; if(r.delayDays>0) delay[r.factory]=(delay[r.factory]||0)+1; });
+  const rate={};
+  for(const f in total){ rate[f]=((delay[f]||0)/total[f]*100); }
+  bar(document.getElementById('barFactoryRate'),rate,'#1565c0','%');
+}
+function renderModel(){
+  const model={};
+  DATA.filter(x=>x.delayDays>0).forEach(r=>{ model[r.item]=(model[r.item]||0)+1; });
+  bar(document.getElementById('barModel'),model,'#ef6c00');
+}
+function renderReason(){
+  const reason={};
+  DATA.filter(x=>x.delayDays>0).forEach(r=>{
+    const key = tReason(r.reason);
+    reason[key]=(reason[key]||0)+1;
+  });
+  bar(document.getElementById('barReason'),reason,'#8e24aa');
+}
+  function renderMonth(){
+  const month={};
+
+  DATA.forEach(r=>{
+    const m=monthKey(r.actual);
+    month[m] = (month[m] || 0) + r.shipmentQty;
+  });
+
+  const container = document.getElementById('barMonth');
+  container.innerHTML = "";
+
+  for(const m in month){
+    const actual = month[m];
+    const target = MONTH_TARGET[m] || 0;
+    const rateNum = target ? (actual / target * 100) : 0;
+const rateText = target ? rateNum.toFixed(1) : "-";
+
+    container.innerHTML += `
+      <div class="brow">
+        <div class="blbl">${m}</div>
+        <div class="bbg">
+          <div class="bfill" style="width:${Math.min(rateNum,100)}%;background:#1b8f5a"></div>
+        </div>
+        <div class="bval" style="width:180px; text-align:left;">
+  <div>실제 선적 수량: ${fmt(actual)}</div>
+  <div>목표 수량: ${fmt(target)}</div>
+  <div>달성율: ${rateText}${target ? "%" : ""}</div>
+</div>
+      </div>
+    `;
+  }
+}
+function renderPartialTable(){
+  const rows = groupPO();
+  const td = document.getElementById('partialTable');
+  td.innerHTML = '';
+
+  rows.forEach(r=>{
+    const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : '-';
+    const s1Date = r.shipments[1] ? r.shipments[1].actual : '-';
+
+    const s2Qty = r.shipments[2] ? fmt(r.shipments[2].shipmentQty) : '-';
+    const s2Date = r.shipments[2] ? r.shipments[2].actual : '-';
+
+    const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : '-';
+const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
+const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : '-';
+const inboundStatus = getInboundStatus(r.inboundPlan);
+    td.innerHTML += `
+      <tr>
+        <td>${safeText(r.nr)}</td>
+        <td>${r.poNo}</td>
+        <td>${r.item}</td>
+<td>${fmt(r.qty)}</td>
+<td>${safeText(r.color)}</td>
+        <td>${safeText(r.poIssueDate)}</td>
+        <td>${r.factory}</td>
+        <td>${s1Qty}</td>
+        <td>${s1Date}</td>
+        <td>${s2Qty}</td>
+        <td>${s2Date}</td>
+        <td>${s3Qty}</td>
+        <td>${s3Date}</td>
+        <td>${fmt(r.totalQty)}</td>
+        <td>${achievementRate === '-' ? '-' : achievementRate + '%'}</td>
         <td>${safeText(r.etdVN)}</td>
 <td>${safeText(r.inboundPlan)}</td>
 <td>${safeText(r.orderType)}</td>
 <td class="${inboundStatus.class}">${inboundStatus.text}</td>
         <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
         <td class="${hasDelay ? 'status-delay' : 'status-ok'}">${hasDelay ? '지연' : '정상'}</td>
+      </tr>`;
+  });
+}
+function renderTable(){
+  const rows=[...DATA].filter(x=>x.delayDays>0).sort((a,b)=>b.delayDays-a.delayDays).slice(0,10);
+  const tb=document.getElementById('tb');
+  tb.innerHTML='';
+  rows.forEach(r=>{
+    tb.innerHTML += `
+      <tr>
+        <td>${r.poNo}</td>
+        <td>${r.shipmentNo}차</td>
+        <td>${r.item}</td>
+        <td>${fmt(r.shipmentQty)}</td>
+        <td>${r.factory}</td>
+        <td>${r.schedule}</td>
+        <td>${r.actual}</td>
+        <td class="text-wrap">${safeText(tPartialReason(r.partialReason))}</td>
+        <td>${r.delayDays}일</td>
+      </tr>`;
+  });
+}
+loadCSV();
+</script>
+</body>
+</html>
       </tr>`;
   });
 }
