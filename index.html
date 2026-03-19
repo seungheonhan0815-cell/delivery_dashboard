@@ -153,26 +153,24 @@ async function loadCSV(){
   const c = r.split(",");
 
   return {
-    nr: (c[0] || "").trim(),
-    poNo: (c[1] || "").trim(),
-    item: (c[2] || "").trim(),
-    total: Number(c[3] || 0),
-    qty: Number(c[8] || 0),
-    color: (c[5] || "").trim(),
-    poIssueDate: (c[6] || "").trim(),
-    shipmentNo: Number(c[7] || 0),
-    schedule: (c[9] || "").trim(),
-    actual: (c[10] || "").trim(),
-    etdVN: (c[11] || "").trim(),
-    inboundPlan: (c[12] || "").trim(),
-    orderType: (c[13] || "").trim(),
-    delayDays: Number(c[14] || 0),
-    factory: (c[15] || "").trim(),
-    reason: (c[16] || "").trim(),
-    partialReason: (c[17] || "").trim(),
-  };
-});
-
+  nr: (c[0] || "").trim(),
+  poNo: (c[1] || "").trim(),
+  item: (c[2] || "").trim(),
+  total: Number(c[3] || 0),
+  qty: Number(c[4] || 0),
+  color: (c[5] || "").trim(),
+  poIssueDate: (c[6] || "").trim(),
+  shipmentNo: Number(c[7] || 0),
+  schedule: (c[9] || "").trim(),
+  actual: (c[10] || c[9] || "").trim(),
+  etdVN: (c[11] || "").trim(),
+  inboundPlan: (c[12] || "").trim(),
+  orderType: (c[13] || "").trim(),
+  delayDays: Number(c[14] || 0),
+  factory: (c[15] || "").trim(),
+  reason: (c[16] || "").trim(),
+  partialReason: (c[17] || "").trim(),
+};
 renderKPI();
 renderFactory();
 renderFactoryRate();
@@ -215,9 +213,7 @@ const PARTIAL_REASON_KO = {
   "2026. 4": 40000,
 };
 const PO_TARGET = {
-  "zdvddafaadfd": 3000,
-  "adafdfewe": 5000,
-  "afdsaafds": 7000,
+  "7ARNCB96NK0001": 4560,
 };
 function fmt(n){return Number(n).toLocaleString()}
 function monthKey(date){return date.substring(0,7)}
