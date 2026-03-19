@@ -153,24 +153,25 @@ async function loadCSV(){
   const c = r.split(",");
 
   return {
-  nr: (c[0] || "").trim(),
-  poNo: (c[1] || "").trim(),
-  item: (c[2] || "").trim(),
-  total: Number(c[3] || 0),
-  qty: Number(c[4] || 0),
-  color: (c[5] || "").trim(),
-  poIssueDate: (c[6] || "").trim(),
-  shipmentNo: Number(c[7] || 0),
-  schedule: (c[9] || "").trim(),
-  actual: (c[10] || c[9] || "").trim(),
-  etdVN: (c[11] || "").trim(),
-  inboundPlan: (c[12] || "").trim(),
-  orderType: (c[13] || "").trim(),
-  delayDays: Number(c[14] || 0),
-  factory: (c[15] || "").trim(),
-  reason: (c[16] || "").trim(),
-  partialReason: (c[17] || "").trim(),
-  };
+  nr: (c[1] || "").trim(),
+  poNo: (c[2] || "").trim(),
+  item: (c[3] || "").trim(),
+  total: Number(c[4] || 0),
+  qty: Number(c[5] || 0),
+  color: (c[6] || "").trim(),
+  poIssueDate: (c[7] || "").trim(),
+  shipmentNo: Number(c[8] || 0),
+  shipmentQty: Number(c[9] || 0),
+  schedule: (c[10] || "").trim(),
+  actual: (c[11] || c[10] || "").trim(),
+  etdVN: (c[12] || "").trim(),
+  inboundPlan: (c[13] || "").trim(),
+  orderType: (c[14] || "").trim(),
+  delayDays: Number(c[15] || 0),
+  factory: (c[16] || "").trim(),
+  reason: (c[17] || "").trim(),
+  partialReason: (c[18] || "").trim(),
+};
 });
 
 renderKPI();
@@ -278,9 +279,9 @@ function groupPO(){
   });
 
   return Object.values(map).map(r => ({
-    ...r,
-    partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
-  }));
+  ...r,
+  partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
+}));
 }
 function renderKPI(){
   const totalPO = uniqueCount(DATA,'poNo');
