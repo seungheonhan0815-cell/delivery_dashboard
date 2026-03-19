@@ -383,40 +383,45 @@ function renderPartialTable(){
   const rows = groupPO();
   const td = document.getElementById('partialTable');
   td.innerHTML = '';
+
   rows.forEach(r=>{
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].qty) : '-';
-const s1Date = r.shipments[1] ? r.shipments[1].actual : '-';
+    const s1Date = r.shipments[1] ? r.shipments[1].actual : '-';
 
-const s2Qty = r.shipments[2] ? fmt(r.shipments[2].qty) : '-';
-const s2Date = r.shipments[2] ? r.shipments[2].actual : '-';
+    const s2Qty = r.shipments[2] ? fmt(r.shipments[2].qty) : '-';
+    const s2Date = r.shipments[2] ? r.shipments[2].actual : '-';
 
-const s3Qty = r.shipments[3] ? fmt(r.shipments[3].qty) : '-';
-const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
+    const s3Qty = r.shipments[3] ? fmt(r.shipments[3].qty) : '-';
+    const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
+
     const targetQty = PO_TARGET[r.poNo] || 0;
     const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
+
     td.innerHTML += `
       <tr>
-    <td>${safeText(r.nr)}</td>
-    <td>${r.poNo}</td>
-    <td>${r.item}</td>
-    <td>${fmt(r.total)}</td>
-    <td>${safeText(r.color)}</td>
-    <td>${safeText(r.poIssueDate)}</td>
-    <td>${r.factory}</td>
-    <td>${s1Qty}</td>
-    <td>${s1Date}</td>
-    <td>${s2Qty}</td>
-    <td>${s2Date}</td>
-    <td>${s3Qty}</td>
-    <td>${s3Date}</td>
-    <td>${fmt(r.totalQty)}</td>
-    <td>${fmt(targetQty)}</td>
-    <td>${safeText(r.etdVN)}</td>
-    <td>${safeText(r.inboundPlan)}</td>
-    <td>${safeText(r.orderType)}</td>
-    <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
-    <td class="${hasDelay ? 'status-delay' : 'status-ok'}">${hasDelay ? '지연' : '정상'}</td>
-  </tr>`;
+        <td>${safeText(r.nr)}</td>
+        <td>${r.poNo}</td>
+        <td>${r.item}</td>
+        <td>${fmt(r.total)}</td>
+        <td>${safeText(r.color)}</td>
+        <td>${safeText(r.poIssueDate)}</td>
+        <td>${r.factory}</td>
+        <td>${s1Qty}</td>
+        <td>${s1Date}</td>
+        <td>${s2Qty}</td>
+        <td>${s2Date}</td>
+        <td>${s3Qty}</td>
+        <td>${s3Date}</td>
+        <td>${fmt(r.totalQty)}</td>
+        <td>${fmt(targetQty)}</td>
+        <td>${safeText(r.etdVN)}</td>
+        <td>${safeText(r.inboundPlan)}</td>
+        <td>${safeText(r.orderType)}</td>
+        <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
+        <td class="${hasDelay ? 'status-delay' : 'status-ok'}">${hasDelay ? '지연' : '정상'}</td>
+      </tr>`;
+  });
+}
 function renderTable(){
   const rows=[...DATA].filter(x=>x.delayDays>0).sort((a,b)=>b.delayDays-a.delayDays).slice(0,10);
   const tb=document.getElementById('tb');
