@@ -174,7 +174,15 @@ function fmt(n){
 }
 
 function monthKey(date){
-  return String(date || "").substring(0, 7);
+  const str = String(date || "").trim();
+  if (!str) return "-";
+
+  const parts = str.split("/");
+  if (parts.length >= 2) {
+    return `${parts[0]}월`;
+  }
+
+  return str;
 }
 
 function uniqueCount(arr, key){
