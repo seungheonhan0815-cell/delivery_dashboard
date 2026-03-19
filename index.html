@@ -141,7 +141,32 @@ th{background:#fafbff}
 
 <script>
 let DATA = [];
+function parseCSVLine(line) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
 
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
 async function loadCSV(){
   try{
     const response = await fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vRUofte0hZoysFaZ7ohaVcVWkzNI2GufWGeBz_s082MWGtkHeW-hiho7qOevORbHMdSpl-y3XZ3xlJ0/pub?output=csv");
@@ -151,7 +176,8 @@ async function loadCSV(){
     const bodyRows = rows.slice(1);
 
     DATA = bodyRows.map(r=>{
-  const c = r.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+  const c = parseCSVLine(r);
+      console.log(c);
 
   return {
   nr: (c[1] || "").trim(),
