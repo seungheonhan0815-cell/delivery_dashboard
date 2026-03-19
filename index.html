@@ -50,6 +50,15 @@ th{background:#fafbff}
 @media (max-width: 700px){
   .kpis,.partial-kpis,.two,.partial-meta{grid-template-columns:1fr;}
 }
+  .status-ok{
+  color:#1b8f5a;
+  font-weight:bold;
+}
+
+.status-wip{
+  color:#f9a825;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
@@ -243,6 +252,21 @@ const PARTIAL_REASON_KO = {
 };
 
 function fmt(n){return Number(n).toLocaleString()}
+  function getInboundStatus(dateStr){
+  if(!dateStr) return { text:"-", class:"" };
+
+  const today = new Date();
+  const target = new Date("2026/" + dateStr); // 날짜 형식 맞추기
+
+  today.setHours(0,0,0,0);
+  target.setHours(0,0,0,0);
+
+  if(today > target){
+    return { text:"완료", class:"status-ok" };
+  }else{
+    return { text:"진행중", class:"status-wip" };
+  }
+}
 function monthKey(date){return date.substring(0,7)}
 function uniqueCount(arr,key){return new Set(arr.map(x=>x[key])).size}
 function safeText(v){return v && String(v).trim() ? String(v) : '-'}
@@ -449,7 +473,8 @@ const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
         <td>${fmt(r.totalQty)}</td>
         <td>${achievementRate === '-' ? '-' : achievementRate + '%'}</td>
         <td>${safeText(r.etdVN)}</td>
-        <td>${safeText(r.inboundPlan)}</td>
+        const inboundStatus = getInboundStatus(r.inboundPlan);
+        <td class="${inboundStatus.class}">${inboundStatus.text}</td>
         <td>${safeText(r.orderType)}</td>
         <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
         <td class="${hasDelay ? 'status-delay' : 'status-ok'}">${hasDelay ? '지연' : '정상'}</td>
