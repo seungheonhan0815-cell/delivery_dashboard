@@ -95,6 +95,7 @@ th{background:#fafbff}
   <th>PO No.</th>
   <th>Item</th>
   <th>Total</th>
+  <th>Q'ty</th>
   <th>Color</th>
   <th>P/issue</th>
   <th>Factory</th>
@@ -247,25 +248,29 @@ function groupPO(){
     const key = `${r.poNo}__${r.color}`;
 
     if(!map[key]) {
-      map[key] = {
-        nr: r.nr,
-        poNo: r.poNo,
-        item: r.item,
-        total: r.total,
-        color: r.color,
-        poIssueDate: r.poIssueDate,
-        etdVN: r.etdVN,
-        inboundPlan: r.inboundPlan,
-        orderType: r.orderType,
-        factory: r.factory,
-        totalQty: 0,
-        shipments: {},
-        partialReasons: new Set()
-      };
-    }
+  map[key] = {
+    nr: r.nr,
+    poNo: r.poNo,
+    item: r.item,
+    total: r.total,
+    qty: r.qty,
+    color: r.color,
+    poIssueDate: r.poIssueDate,
+    etdVN: r.etdVN,
+    inboundPlan: r.inboundPlan,
+    orderType: r.orderType,
+    factory: r.factory,
+    totalQty: 0,
+    shipments: {},
+    partialReasons: new Set()
+  };
+}
 
     map[key].totalQty += r.shipmentQty;
     map[key].shipments[r.shipmentNo] = r;
+    if (!map[key].total || map[key].total < r.total) {
+  map[key].total = r.total;
+}
 
     if(r.partialReason && r.partialReason !== 'None') {
       map[key].partialReasons.add(tPartialReason(r.partialReason));
@@ -404,7 +409,8 @@ function renderPartialTable(){
         <td>${r.poNo}</td>
         <td>${r.item}</td>
         <td>${fmt(r.total)}</td>
-        <td>${safeText(r.color)}</td>
+<td>${fmt(r.qty)}</td>
+<td>${safeText(r.color)}</td>
         <td>${safeText(r.poIssueDate)}</td>
         <td>${r.factory}</td>
         <td>${s1Qty}</td>
