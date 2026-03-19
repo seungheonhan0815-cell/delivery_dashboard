@@ -334,6 +334,7 @@ function renderKPI(){
   const totalShipment = completed.length;
 
   const delayPO = new Set(DATA.filter(x => x.delayDays > 0).map(x => x.poNo)).size;
+  const delayPORate = totalPO ? ((delayPO / totalPO) * 100).toFixed(1) : "0.0";
 
   const otdRate = totalShipment
     ? ((ontimeShipment / totalShipment) * 100).toFixed(1)
