@@ -453,7 +453,6 @@ function renderPartialTable(){
     const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : '-';
 const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
 const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : '-';
-const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
 const inboundStatus = getInboundStatus(r.inboundPlan);
     td.innerHTML += `
       <tr>
@@ -473,8 +472,9 @@ const inboundStatus = getInboundStatus(r.inboundPlan);
         <td>${fmt(r.totalQty)}</td>
         <td>${achievementRate === '-' ? '-' : achievementRate + '%'}</td>
         <td>${safeText(r.etdVN)}</td>
-        <td class="${inboundStatus.class}">${inboundStatus.text}</td>
-        <td>${safeText(r.orderType)}</td>
+<td>${safeText(r.inboundPlan)}</td>
+<td>${safeText(r.orderType)}</td>
+<td class="${inboundStatus.class}">${inboundStatus.text}</td>
         <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
         <td class="${hasDelay ? 'status-delay' : 'status-ok'}">${hasDelay ? '지연' : '정상'}</td>
       </tr>`;
