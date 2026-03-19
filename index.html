@@ -403,9 +403,9 @@ function renderPartialTable(){
     const s2Date = r.shipments[2] ? r.shipments[2].actual : '-';
 
     const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : '-';
-    const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
-    const targetQty = r.qty || 0;
-    const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
+const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
+const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : '-';
+const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
 
     td.innerHTML += `
       <tr>
