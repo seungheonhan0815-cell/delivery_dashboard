@@ -91,20 +91,27 @@ th{background:#fafbff}
   <table>
     <thead>
       <tr>
-        <th>PO</th>
-        <th>품목</th>
-        <th>공장</th>
-        <th>1차 수량</th>
-<th>1차 일정</th>
-<th>2차 수량</th>
-<th>2차 일정</th>
-<th>3차 수량</th>
-<th>3차 일정</th>
-        <th>실제 선적 수량</th>
-<th>목표 선적 수량</th>
-<th>분할 선적 사유</th>
-        <th>상태</th>
-      </tr>
+  <th>N&R</th>
+  <th>PO No.</th>
+  <th>Item</th>
+  <th>Total</th>
+  <th>Color</th>
+  <th>P/issue</th>
+  <th>Factory</th>
+  <th>1차 수량</th>
+  <th>1차 일정</th>
+  <th>2차 수량</th>
+  <th>2차 일정</th>
+  <th>3차 수량</th>
+  <th>3차 일정</th>
+  <th>실제 선적 수량</th>
+  <th>목표 선적 수량</th>
+  <th>ETD(VN)</th>
+  <th>물류 입고 예정</th>
+  <th>오더 구분</th>
+  <th>분할 선적 사유</th>
+  <th>상태</th>
+</tr>
     </thead>
     <tbody id="partialTable"></tbody>
   </table>
@@ -146,16 +153,23 @@ async function loadCSV(){
   const c = r.split(",");
 
   return {
-    poNo:(c[1] || "").trim(),
-    item:(c[2] || "").trim(),
-    shipmentNo:Number(c[3] || 0),
-    qty:Number(c[4] || 0),
-    schedule:(c[5] || "").trim(),
-    actual:(c[6] || "").trim(),
-    delayDays:Number(c[7] || 0),
-    factory:(c[8] || "").trim(),
-    reason:(c[9] || "").trim(),
-    partialReason:(c[10] || "").trim(),
+    nr: (c[0] || "").trim(),
+    poNo: (c[1] || "").trim(),
+    item: (c[2] || "").trim(),
+    total: Number(c[3] || 0),
+    qty: Number(c[8] || 0),
+    color: (c[5] || "").trim(),
+    poIssueDate: (c[6] || "").trim(),
+    shipmentNo: Number(c[7] || 0),
+    schedule: (c[9] || "").trim(),
+    actual: (c[10] || "").trim(),
+    etdVN: (c[11] || "").trim(),
+    inboundPlan: (c[12] || "").trim(),
+    orderType: (c[13] || "").trim(),
+    delayDays: Number(c[14] || 0),
+    factory: (c[15] || "").trim(),
+    reason: (c[16] || "").trim(),
+    partialReason: (c[17] || "").trim(),
   };
 });
 
@@ -230,13 +244,35 @@ function bar(container,data,color,suffix=""){
 }
 function groupPO(){
   const map = {};
+
   DATA.forEach(r=>{
-    if(!map[r.poNo]) map[r.poNo] = {poNo:r.poNo,item:r.item,factory:r.factory,totalQty:0,shipments:{},partialReasons:new Set()};
+    if(!map[r.poNo]) {
+      map[r.poNo] = {
+        nr: r.nr,
+        poNo: r.poNo,
+        item: r.item,
+        total: r.total,
+        color: r.color,
+        poIssueDate: r.poIssueDate,
+        etdVN: r.etdVN,
+        inboundPlan: r.inboundPlan,
+        orderType: r.orderType,
+        factory: r.factory,
+        totalQty: 0,
+        shipments: {},
+        partialReasons: new Set()
+      };
+    }
+
     map[r.poNo].totalQty += r.qty;
     map[r.poNo].shipments[r.shipmentNo] = r;
-    if(r.partialReason && r.partialReason !== 'None') map[r.poNo].partialReasons.add(tPartialReason(r.partialReason));
+
+    if(r.partialReason && r.partialReason !== 'None') {
+      map[r.poNo].partialReasons.add(tPartialReason(r.partialReason));
+    }
   });
-  return Object.values(map).map(r=>({
+
+  return Object.values(map).map(r => ({
     ...r,
     partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
   }));
@@ -360,22 +396,27 @@ const s3Date = r.shipments[3] ? r.shipments[3].actual : '-';
     const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
     td.innerHTML += `
       <tr>
-        <td>${r.poNo}</td>
-        <td>${r.item}</td>
-        <td>${r.factory}</td>
-        <td>${s1Qty}</td>
-<td>${s1Date}</td>
-<td>${s2Qty}</td>
-<td>${s2Date}</td>
-<td>${s3Qty}</td>
-<td>${s3Date}</td>
-        <td>${fmt(r.totalQty)}</td>
-<td>${fmt(targetQty)}</td>
-<td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
-        <td class="${hasDelay?'status-delay':'status-ok'}">${hasDelay?'지연':'정상'}</td>
-      </tr>`;
-  });
-}
+    <td>${safeText(r.nr)}</td>
+    <td>${r.poNo}</td>
+    <td>${r.item}</td>
+    <td>${fmt(r.total)}</td>
+    <td>${safeText(r.color)}</td>
+    <td>${safeText(r.poIssueDate)}</td>
+    <td>${r.factory}</td>
+    <td>${s1Qty}</td>
+    <td>${s1Date}</td>
+    <td>${s2Qty}</td>
+    <td>${s2Date}</td>
+    <td>${s3Qty}</td>
+    <td>${s3Date}</td>
+    <td>${fmt(r.totalQty)}</td>
+    <td>${fmt(targetQty)}</td>
+    <td>${safeText(r.etdVN)}</td>
+    <td>${safeText(r.inboundPlan)}</td>
+    <td>${safeText(r.orderType)}</td>
+    <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
+    <td class="${hasDelay ? 'status-delay' : 'status-ok'}">${hasDelay ? '지연' : '정상'}</td>
+  </tr>`;
 function renderTable(){
   const rows=[...DATA].filter(x=>x.delayDays>0).sort((a,b)=>b.delayDays-a.delayDays).slice(0,10);
   const tb=document.getElementById('tb');
