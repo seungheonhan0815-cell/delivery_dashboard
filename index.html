@@ -161,14 +161,14 @@ async function loadCSV(){
 qty: Number((c[5] || "0").replace(/,/g, "").replace(/"/g, "").trim()),
   color: (c[6] || "").trim(),
   poIssueDate: (c[7] || "").trim(),
-  shipmentNo: Number(c[8] || 0),
+  shipmentNo: Number((c[8] || "0").replace(/,/g, "").replace(/"/g, "").trim()),
   shipmentQty: Number((c[9] || "0").replace(/,/g, "").replace(/"/g, "").trim()),
   schedule: (c[10] || "").trim(),
   actual: (c[11] || c[10] || "").trim(),
   etdVN: (c[12] || "").trim(),
   inboundPlan: (c[13] || "").trim(),
   orderType: (c[14] || "").trim(),
-  delayDays: Number(c[15] || 0),
+  delayDays: Number((c[15] || "0").replace(/,/g, "").replace(/"/g, "").trim()),
   factory: (c[16] || "").trim(),
   reason: (c[17] || "").trim(),
   partialReason: (c[18] || "").trim(),
@@ -413,7 +413,7 @@ const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
         <td>${r.poNo}</td>
         <td>${r.item}</td>
         <td>${fmt(r.total)}</td>
-<td>${fmt(r.qty)}</td>
+<td>${fmt(r.shipmentQty)}</td>
 <td>${safeText(r.color)}</td>
         <td>${safeText(r.poIssueDate)}</td>
         <td>${r.factory}</td>
