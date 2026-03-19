@@ -152,7 +152,7 @@ async function loadCSV(){
 
     DATA = bodyRows.map(r=>{
   const c = r.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
-
+console.log(c);
   return {
   nr: (c[1] || "").trim(),
   poNo: (c[2] || "").trim(),
