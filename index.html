@@ -106,7 +106,7 @@ th{background:#fafbff}
   <th>3차 수량</th>
   <th>3차 일정</th>
   <th>실제 선적 수량</th>
-  <th>목표 선적 수량</th>
+  <th>목표 달성</th>
   <th>ETD(VN)</th>
   <th>물류 입고 예정</th>
   <th>오더 구분</th>
@@ -424,7 +424,7 @@ function renderPartialTable(){
         <td>${s3Qty}</td>
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
-        <td>${fmt(targetQty)}</td>
+        <td>${achievementRate === '-' ? '-' : achievementRate + '%'}</td>
         <td>${safeText(r.etdVN)}</td>
         <td>${safeText(r.inboundPlan)}</td>
         <td>${safeText(r.orderType)}</td>
