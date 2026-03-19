@@ -182,13 +182,7 @@ renderReason();
 renderMonth();
 renderPartialTable();
 renderTable();
-renderFactory();
-renderFactoryRate();
-renderModel();
-renderReason();
-renderMonth();
-renderPartialTable();
-renderTable();
+
     
 }catch(error){
     document.getElementById("kpiGrid").innerHTML = `
@@ -286,19 +280,7 @@ function groupPO(){
   }));
 }
 
-    map[r.poNo].totalQty += r.qty;
-    map[r.poNo].shipments[r.shipmentNo] = r;
-
-    if(r.partialReason && r.partialReason !== 'None') {
-      map[r.poNo].partialReasons.add(tPartialReason(r.partialReason));
-    }
-  });
-
-  return Object.values(map).map(r => ({
-  ...r,
-  partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(', ') : '-',
-}));
-}
+    
 function renderKPI(){
   const totalPO = uniqueCount(DATA,'poNo');
   const totalQty = DATA.reduce((s,x)=>s+x.qty,0);
