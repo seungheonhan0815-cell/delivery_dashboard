@@ -94,7 +94,6 @@ th{background:#fafbff}
   <th>N&R</th>
   <th>PO No.</th>
   <th>Item</th>
-  <th>Total</th>
   <th>Q'ty</th>
   <th>Color</th>
   <th>P/issue</th>
@@ -437,7 +436,6 @@ const hasDelay = Object.values(r.shipments).some(x=>x.delayDays>0);
         <td>${safeText(r.nr)}</td>
         <td>${r.poNo}</td>
         <td>${r.item}</td>
-        <td>${fmt(r.total)}</td>
 <td>${fmt(r.qty)}</td>
 <td>${safeText(r.color)}</td>
         <td>${safeText(r.poIssueDate)}</td>
