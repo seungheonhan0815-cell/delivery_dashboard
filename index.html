@@ -243,38 +243,38 @@ function bar(container,data,color,suffix=""){
 }
 function groupPO(){
   const map = {};
-const poTotalMap = {};
+  const poTotalMap = {};
+
   DATA.forEach(r => {
-  if (!poTotalMap[r.poNo] || poTotalMap[r.poNo] < r.total) {
-    poTotalMap[r.poNo] = r.total;
-  }
-});
+    if (!poTotalMap[r.poNo] || poTotalMap[r.poNo] < r.total) {
+      poTotalMap[r.poNo] = r.total;
+    }
+  });
+
+  DATA.forEach(r => {
     const key = `${r.poNo}__${r.color}`;
 
     if(!map[key]) {
-  map[key] = {
-    nr: r.nr,
-    poNo: r.poNo,
-    item: r.item,
-    total: r.total,
-    qty: r.qty,
-    color: r.color,
-    poIssueDate: r.poIssueDate,
-    etdVN: r.etdVN,
-    inboundPlan: r.inboundPlan,
-    orderType: r.orderType,
-    factory: r.factory,
-    totalQty: 0,
-    shipments: {},
-    partialReasons: new Set()
-  };
-}
+      map[key] = {
+        nr: r.nr,
+        poNo: r.poNo,
+        item: r.item,
+        total: poTotalMap[r.poNo] || r.total,
+        qty: r.qty,
+        color: r.color,
+        poIssueDate: r.poIssueDate,
+        etdVN: r.etdVN,
+        inboundPlan: r.inboundPlan,
+        orderType: r.orderType,
+        factory: r.factory,
+        totalQty: 0,
+        shipments: {},
+        partialReasons: new Set()
+      };
+    }
 
     map[key].totalQty += r.shipmentQty;
     map[key].shipments[r.shipmentNo] = r;
-    if (!map[key].total || map[key].total < r.total) {
-  map[key].total = r.total;
-}
 
     if(r.partialReason && r.partialReason !== 'None') {
       map[key].partialReasons.add(tPartialReason(r.partialReason));
