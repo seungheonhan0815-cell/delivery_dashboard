@@ -327,13 +327,17 @@ function groupPO(){
 function renderKPI(){
   const totalPO = uniqueCount(DATA, "poNo");
   const totalQty = DATA.reduce((s, x) => s + x.qty, 0);
-const completed = DATA.filter(x => x.actual && x.actual !== "-");
+
+  const completed = DATA.filter(x => x.actual && x.actual !== "-");
+
   const ontimeShipment = completed.filter(x => x.delayDays <= 0).length;
   const totalShipment = completed.length;
+
   const delayPO = new Set(DATA.filter(x => x.delayDays > 0).map(x => x.poNo)).size;
 
-  const otdRate = totalShipment ? ((ontimeShipment / totalShipment) * 100).toFixed(1) : "0.0";
-  const delayPORate = totalPO ? ((delayPO / totalPO) * 100).toFixed(1) : "0.0";
+  const otdRate = totalShipment
+    ? ((ontimeShipment / totalShipment) * 100).toFixed(1)
+    : "0.0";
 
   document.getElementById("kpiGrid").innerHTML = `
     <div class="card">
