@@ -250,8 +250,7 @@ function getInboundStatus(dateStr){
   }
 }
 function getStatusInfo(r){
-  const rateText = String(r.achievementRate || "").replace("%", "").trim();
-  const rate = parseFloat(rateText);
+  const rate = r.qty > 0 ? (r.totalQty / r.qty) * 100 : 0;
 
   if (rate >= 100) {
     return { text: "완료", class: "status-ok" };
@@ -556,7 +555,6 @@ async function loadCSV(){
         delayDays: parseNumber(c[15]),
         factory: String(c[16] || "").trim(),
         reason: String(c[17] || "").trim(),
-        achievementRate: String(c[??] || "").trim(),
         partialReason: String(c[18] || "").trim(),
         status: String(c[19] || "").trim(),
       };
