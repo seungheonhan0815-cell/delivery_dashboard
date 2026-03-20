@@ -21,7 +21,7 @@
   --radius:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:Arial, sans-serif;background:var(--bg);color:var(--text);}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);}
 .wrap{max-width:1600px;margin:auto;padding:10px;display:grid;gap:10px;}
 .grid{display:grid;gap:10px;}
 .kpis{grid-template-columns:repeat(4,1fr);}
@@ -38,8 +38,8 @@ body{font-family:Arial, sans-serif;background:var(--bg);color:var(--text);}
 .bval{width:90px;text-align:right;font-weight:bold;}
 .blbl{width:160px;text-align:right;font-size:12px;color:#666;}
 table{width:100%;border-collapse:collapse;}
-th,td{padding:8px 6px;border-bottom:1px solid #eee;font-size:13px;text-align:left;vertical-align:top;}
-th{background:#fafbff;position:sticky;top:0;}
+th,td{padding:8px 6px;border-bottom:1px solid #eee;font-size:13px;text-align:left;vertical-align:top;white-space:nowrap;}
+th{background:#fafbff;position:sticky;top:0;z-index:1;}
 .status-ok{color:var(--green);font-weight:bold;}
 .status-delay{color:var(--red);font-weight:bold;}
 .status-wip{color:var(--yellow);font-weight:bold;}
@@ -92,10 +92,10 @@ th{background:#fafbff;position:sticky;top:0;}
       <table>
         <thead>
           <tr>
-            <th>N&R</th>
+            <th>N&amp;R</th>
             <th>PO No.</th>
             <th>Item</th>
-            <th>PO Q'ty</th>
+            <th>PT Q'ty</th>
             <th>Color</th>
             <th>P/issue</th>
             <th>Factory</th>
@@ -125,23 +125,23 @@ th{background:#fafbff;position:sticky;top:0;}
         <thead>
           <tr>
             <th>N&amp;R</th>
-  <th>PO No.</th>
-  <th>Item</th>
-  <th>PO Q'ty</th>
-  <th>Color</th>
-  <th>P/issue</th>
-  <th>Factory</th>
-  <th>1차 수량</th>
-  <th>1차 일정</th>
-  <th>2차 수량</th>
-  <th>2차 일정</th>
-  <th>3차 수량</th>
-  <th>3차 일정</th>
-  <th>총 선적 수량</th>
-  <th>선적 확약일</th>
-  <th>실제 선적일</th>
-  <th>지연일수</th>
-  <th>지연사유</th>
+            <th>PO No.</th>
+            <th>Item</th>
+            <th>PO Q'ty</th>
+            <th>Color</th>
+            <th>P/issue</th>
+            <th>Factory</th>
+            <th>1차 수량</th>
+            <th>1차 일정</th>
+            <th>2차 수량</th>
+            <th>2차 일정</th>
+            <th>3차 수량</th>
+            <th>3차 일정</th>
+            <th>총 선적 수량</th>
+            <th>선적 확약일</th>
+            <th>실제 선적일</th>
+            <th>지연일수</th>
+            <th>지연사유</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
@@ -183,7 +183,12 @@ function fmt(n){
 
 function monthKey(date){
   const str = String(date || "").trim();
-  if (!str) return "-";
+  if (!str || str === "-") return "-";
+
+  if (/^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/.test(str)) {
+    const m = str.match(/^(\d{4})\.\s*(\d{1,2})\./);
+    if (m) return `${m[1]}. ${Number(m[2])}`;
+  }
 
   const parts = str.split("/");
   if (parts.length >= 2) {
@@ -240,34 +245,40 @@ function parseNumber(value){
   return Number(String(value || "0").replace(/,/g, "").replace(/"/g, "").trim()) || 0;
 }
 
-function getInboundStatus(dateStr){
-  if(!dateStr) return { text:"-", class:"" };
+function formatDate(value){
+  const str = String(value || "").trim();
+  if (!str) return "-";
 
-  const today = new Date();
-  const target = new Date("2026/" + dateStr);
-
-  if (isNaN(target.getTime())) {
-    return { text:"-", class:"" };
+  if (/^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/.test(str)) return str;
+  if (/^\d{1,2}\/\d{1,2}$/.test(str)) return str;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [y,m,d] = str.split("-");
+    return `${y}. ${Number(m)}. ${Number(d)}`;
   }
 
-  today.setHours(0,0,0,0);
-  target.setHours(0,0,0,0);
-
-  if(today > target){
-    return { text:"완료", class:"status-ok" };
-  }else{
-    return { text:"진행중", class:"status-wip" };
+  if (/^\d+$/.test(str)) {
+    const serial = Number(str);
+    if (serial > 30000 && serial < 60000) {
+      const epoch = new Date(Date.UTC(1899, 11, 30));
+      const date = new Date(epoch.getTime() + serial * 86400000);
+      const y = date.getUTCFullYear();
+      const m = date.getUTCMonth() + 1;
+      const d = date.getUTCDate();
+      return `${y}. ${m}. ${d}`;
+    }
   }
+
+  return str;
 }
+
 function getStatusInfo(r){
   const rate = r.qty > 0 ? (r.totalQty / r.qty) * 100 : 0;
-
   if (rate >= 100) {
     return { text: "완료", class: "status-ok" };
-  } else {
-    return { text: "진행중", class: "status-wip" };
   }
+  return { text: "진행중", class: "status-wip" };
 }
+
 function bar(container, data, color, suffix=""){
   const values = Object.values(data);
   if(!values.length){
@@ -295,10 +306,53 @@ function bar(container, data, color, suffix=""){
 }
 
 function groupPO(){
-  function groupDelayedPO(){
-  const rows = groupPO();
+  const map = {};
+  const poTotalMap = {};
 
-  return rows
+  DATA.forEach(r => {
+    if (!poTotalMap[r.poNo] || poTotalMap[r.poNo] < r.total) {
+      poTotalMap[r.poNo] = r.total;
+    }
+  });
+
+  DATA.forEach(r => {
+    const key = `${r.poNo}__${r.color}`;
+
+    if(!map[key]) {
+      map[key] = {
+        nr: r.nr,
+        poNo: r.poNo,
+        item: r.item,
+        total: poTotalMap[r.poNo] || r.total,
+        qty: r.qty,
+        color: r.color,
+        poIssueDate: r.poIssueDate,
+        etdVN: r.etdVN,
+        inboundPlan: r.inboundPlan,
+        orderType: r.orderType,
+        factory: r.factory,
+        totalQty: 0,
+        shipments: {},
+        partialReasons: new Set()
+      };
+    }
+
+    map[key].totalQty += r.shipmentQty;
+    map[key].shipments[r.shipmentNo] = r;
+
+    if(r.partialReason && r.partialReason !== "None") {
+      map[key].partialReasons.add(tPartialReason(r.partialReason));
+    }
+  });
+
+  return Object.values(map).map(r => ({
+    ...r,
+    partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(", ") : "-"
+  }));
+}
+
+function groupDelayedPO(){
+  return groupPO()
     .map(r => {
       const s1 = r.shipments[1];
       const s2 = r.shipments[2];
@@ -329,52 +383,7 @@ function groupPO(){
         delayReasonSummary: delayReasons.size ? [...delayReasons].join(", ") : "-"
       };
     })
-    .filter(r => r.totalQty < r.qty);
-}
-  const map = {};
-  const poTotalMap = {};
-
-  DATA.forEach(r => {
-    if (!poTotalMap[r.poNo] || poTotalMap[r.poNo] < r.total) {
-      poTotalMap[r.poNo] = r.total;
-    }
-  });
-
-  DATA.forEach(r => {
-    const key = `${r.poNo}__${r.color}`;
-
-    if(!map[key]) {
-      map[key] = {
-        nr: r.nr,
-        poNo: r.poNo,
-        item: r.item,
-        total: poTotalMap[r.poNo] || r.total,
-        qty: r.qty,
-        color: r.color,
-        poIssueDate: r.poIssueDate,
-        etdVN: r.etdVN,
-        inboundPlan: r.inboundPlan,
-        orderType: r.orderType,
-        factory: r.factory,
-        status: r.status,
-        totalQty: 0,
-        shipments: {},
-        partialReasons: new Set()
-      };
-    }
-
-    map[key].totalQty += r.shipmentQty;
-    map[key].shipments[r.shipmentNo] = r;
-
-    if(r.partialReason && r.partialReason !== "None") {
-      map[key].partialReasons.add(tPartialReason(r.partialReason));
-    }
-  });
-
-  return Object.values(map).map(r => ({
-    ...r,
-    partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(", ") : "-"
-  }));
+    .filter(r => r.maxDelayDays > 0 || r.totalQty < r.qty);
 }
 
 function renderKPI(){
@@ -382,16 +391,12 @@ function renderKPI(){
   const totalQty = DATA.reduce((s, x) => s + x.qty, 0);
 
   const completed = DATA.filter(x => x.actual && x.actual !== "-");
-
   const ontimeShipment = completed.filter(x => x.delayDays <= 0).length;
   const totalShipment = completed.length;
 
   const delayPO = new Set(DATA.filter(x => x.delayDays > 0).map(x => x.poNo)).size;
   const delayPORate = totalPO ? ((delayPO / totalPO) * 100).toFixed(1) : "0.0";
-
-  const otdRate = totalShipment
-    ? ((ontimeShipment / totalShipment) * 100).toFixed(1)
-    : "0.0";
+  const otdRate = totalShipment ? ((ontimeShipment / totalShipment) * 100).toFixed(1) : "0.0";
 
   document.getElementById("kpiGrid").innerHTML = `
     <div class="card">
@@ -501,39 +506,40 @@ function renderPartialTable(){
 
   rows.forEach(r => {
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : "-";
-    const s1Date = r.shipments[1] ? safeText(r.shipments[1].actual) : "-";
+    const s1Date = r.shipments[1] ? formatDate(r.shipments[1].actual) : "-";
 
     const s2Qty = r.shipments[2] ? fmt(r.shipments[2].shipmentQty) : "-";
-    const s2Date = r.shipments[2] ? safeText(r.shipments[2].actual) : "-";
+    const s2Date = r.shipments[2] ? formatDate(r.shipments[2].actual) : "-";
 
     const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : "-";
-    const s3Date = r.shipments[3] ? safeText(r.shipments[3].actual) : "-";
+    const s3Date = r.shipments[3] ? formatDate(r.shipments[3].actual) : "-";
 
-    const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : "-";
+    const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : "0.0";
     const statusInfo = getStatusInfo(r);
 
-    tb.innerHTML += `
-  <tr>
-    <td>${r.nr || '-'}</td>
-    <td>${r.poNo || '-'}</td>
-    <td>${r.item || '-'}</td>
-    <td>${r.qty || 0}</td>
-    <td>${r.color || '-'}</td>
-    <td>${r.poIssueDate || '-'}</td>
-    <td>${r.factory || '-'}</td>
-    <td>${r.shipmentNo === 1 ? (r.shipmentQty || 0) : '-'}</td>
-    <td>${r.shipmentNo === 1 ? (r.schedule || '-') : '-'}</td>
-    <td>${r.shipmentNo === 2 ? (r.shipmentQty || 0) : '-'}</td>
-    <td>${r.shipmentNo === 2 ? (r.schedule || '-') : '-'}</td>
-    <td>${r.shipmentNo === 3 ? (r.shipmentQty || 0) : '-'}</td>
-    <td>${r.shipmentNo === 3 ? (r.schedule || '-') : '-'}</td>
-    <td>${r.shipmentQty || 0}</td>
-    <td>${r.etdVN || '-'}</td>
-    <td>${r.actual || '-'}</td>
-    <td>${r.delayDays || 0}</td>
-    <td>${r.reason || '-'}</td>
-  </tr>
-`;
+    td.innerHTML += `
+      <tr>
+        <td>${safeText(r.nr)}</td>
+        <td>${safeText(r.poNo)}</td>
+        <td>${safeText(r.item)}</td>
+        <td>${fmt(r.qty)}</td>
+        <td>${safeText(r.color)}</td>
+        <td>${formatDate(r.poIssueDate)}</td>
+        <td>${safeText(r.factory)}</td>
+        <td>${s1Qty}</td>
+        <td>${s1Date}</td>
+        <td>${s2Qty}</td>
+        <td>${s2Date}</td>
+        <td>${s3Qty}</td>
+        <td>${s3Date}</td>
+        <td>${fmt(r.totalQty)}</td>
+        <td>${achievementRate}%</td>
+        <td>${formatDate(r.etdVN)}</td>
+        <td>${formatDate(r.inboundPlan)}</td>
+        <td>${safeText(r.orderType)}</td>
+        <td class="${statusInfo.class}">${statusInfo.text}</td>
+      </tr>
+    `;
   });
 }
 
@@ -544,13 +550,13 @@ function renderTable(){
 
   rows.forEach(r => {
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : "-";
-    const s1Date = r.shipments[1] ? safeText(r.shipments[1].actual) : "-";
+    const s1Date = r.shipments[1] ? formatDate(r.shipments[1].schedule) : "-";
 
     const s2Qty = r.shipments[2] ? fmt(r.shipments[2].shipmentQty) : "-";
-    const s2Date = r.shipments[2] ? safeText(r.shipments[2].actual) : "-";
+    const s2Date = r.shipments[2] ? formatDate(r.shipments[2].schedule) : "-";
 
     const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : "-";
-    const s3Date = r.shipments[3] ? safeText(r.shipments[3].actual) : "-";
+    const s3Date = r.shipments[3] ? formatDate(r.shipments[3].schedule) : "-";
 
     tb.innerHTML += `
       <tr>
@@ -559,7 +565,7 @@ function renderTable(){
         <td>${safeText(r.item)}</td>
         <td>${fmt(r.qty)}</td>
         <td>${safeText(r.color)}</td>
-        <td>${safeText(r.poIssueDate)}</td>
+        <td>${formatDate(r.poIssueDate)}</td>
         <td>${safeText(r.factory)}</td>
         <td>${s1Qty}</td>
         <td>${s1Date}</td>
@@ -568,14 +574,15 @@ function renderTable(){
         <td>${s3Qty}</td>
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
-        <td>${safeText(r.etdVN)}</td>
-        <td>${safeText(r.latestActual)}</td>
+        <td>${formatDate(r.etdVN)}</td>
+        <td>${formatDate(r.latestActual)}</td>
         <td>${fmt(r.maxDelayDays)}</td>
-        <td>${safeText(r.delayReasonSummary)}</td>
+        <td class="text-wrap">${safeText(r.delayReasonSummary)}</td>
       </tr>
     `;
   });
 }
+
 async function loadCSV(){
   try{
     const response = await fetch(SHEET_CSV_URL);
@@ -586,7 +593,6 @@ async function loadCSV(){
 
     DATA = bodyRows.map(r => {
       const c = parseCSVLine(r);
-
       return {
         nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
         poNo: String(c[2] || "").trim(),
@@ -605,8 +611,7 @@ async function loadCSV(){
         delayDays: parseNumber(c[15]),
         factory: String(c[16] || "").trim(),
         reason: String(c[17] || "").trim(),
-        partialReason: String(c[18] || "").trim(),
-        status: String(c[19] || "").trim(),
+        partialReason: String(c[18] || "").trim()
       };
     }).filter(x => x.poNo && x.item);
 
