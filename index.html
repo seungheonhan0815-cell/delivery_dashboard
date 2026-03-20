@@ -156,8 +156,9 @@ let DATA = [];
 const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRUofte0hZoysFaZ7ohaVcVWkzNI2GufWGeBz_s082MWGtkHeW-hiho7qOevORbHMdSpl-y3XZ3xlJ0/pub?output=csv";
 
 const MONTH_TARGET = {
-  "2026. 3": 30000,
-  "2026. 4": 40000,
+  "2025. 12": 31870,
+  "2026. 1": 26000,
+  "2026. 3": 24200
 };
 
 const REASON_KO = {
@@ -504,9 +505,11 @@ function renderMonth(){
   const container = document.getElementById("barMonth");
   container.innerHTML = "";
 
-  for(const m in month){
-    const actual = month[m];
-    const target = MONTH_TARGET[m] || 0;
+  onst monthOrder = ["2025. 12", "2026. 1", "2026. 3"];
+
+monthOrder.forEach(m => {
+  const actual = month[m] || 0;
+  const target = MONTH_TARGET[m] || 0;
     const rateNum = target ? (actual / target * 100) : 0;
     const rateText = target ? rateNum.toFixed(1) : "-";
 
@@ -524,7 +527,7 @@ function renderMonth(){
       </div>
     `;
   }
-}
+});
 
 function renderPartialTable(){
   const rows = groupPO();
