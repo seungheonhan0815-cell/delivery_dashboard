@@ -451,7 +451,7 @@ function renderKPI(){
 
 function renderFactory(){
   const delay = {};
-  DATA.filter(x => x.delayDays > 0).forEach(r => {
+  groupDelayedPO().forEach(r => {
     delay[r.factory] = (delay[r.factory] || 0) + 1;
   });
   bar(document.getElementById("barFactory"), delay, "#c62828");
@@ -478,7 +478,7 @@ function renderFactoryRate(){
 
 function renderModel(){
   const model = {};
-  DATA.filter(x => x.delayDays > 0).forEach(r => {
+  groupDelayedPO().forEach(r => {
     model[r.item] = (model[r.item] || 0) + 1;
   });
   bar(document.getElementById("barModel"), model, "#ef6c00");
@@ -486,8 +486,8 @@ function renderModel(){
 
 function renderReason(){
   const reason = {};
-  DATA.filter(x => x.delayDays > 0).forEach(r => {
-    const key = tReason(r.reason);
+  groupDelayedPO().forEach(r => {
+    const key = safeText(r.delayReasonSummary);
     reason[key] = (reason[key] || 0) + 1;
   });
   bar(document.getElementById("barReason"), reason, "#8e24aa");
