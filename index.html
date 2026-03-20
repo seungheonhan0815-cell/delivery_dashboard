@@ -124,14 +124,24 @@ th{background:#fafbff;position:sticky;top:0;}
       <table>
         <thead>
           <tr>
-            <th>PO</th>
-<th>품목</th>
-<th>공장</th>
-<th>수량</th>
-<th>계획일</th>
-<th>실적일</th>
-<th>지연</th>
-<th>지연사유</th>
+            <th>N&amp;R</th>
+  <th>PO No.</th>
+  <th>Item</th>
+  <th>PO Q'ty</th>
+  <th>Color</th>
+  <th>P/issue</th>
+  <th>Factory</th>
+  <th>1차 수량</th>
+  <th>1차 일정</th>
+  <th>2차 수량</th>
+  <th>2차 일정</th>
+  <th>3차 수량</th>
+  <th>3차 일정</th>
+  <th>총 선적 수량</th>
+  <th>선적 확약일</th>
+  <th>실제 선적일</th>
+  <th>지연일수</th>
+  <th>지연사유</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
@@ -285,6 +295,42 @@ function bar(container, data, color, suffix=""){
 }
 
 function groupPO(){
+  function groupDelayedPO(){
+  const rows = groupPO();
+
+  return rows
+    .map(r => {
+      const s1 = r.shipments[1];
+      const s2 = r.shipments[2];
+      const s3 = r.shipments[3];
+
+      const latestActual =
+        (s3 && s3.actual && s3.actual !== "-" ? s3.actual :
+        s2 && s2.actual && s2.actual !== "-" ? s2.actual :
+        s1 && s1.actual && s1.actual !== "-" ? s1.actual : "-");
+
+      const maxDelayDays = Math.max(
+        s1 ? Number(s1.delayDays || 0) : 0,
+        s2 ? Number(s2.delayDays || 0) : 0,
+        s3 ? Number(s3.delayDays || 0) : 0
+      );
+
+      const delayReasons = new Set();
+      [s1, s2, s3].forEach(x => {
+        if (x && x.reason && x.reason !== "None") {
+          delayReasons.add(tReason(x.reason));
+        }
+      });
+
+      return {
+        ...r,
+        latestActual,
+        maxDelayDays,
+        delayReasonSummary: delayReasons.size ? [...delayReasons].join(", ") : "-"
+      };
+    })
+    .filter(r => r.totalQty < r.qty);
+}
   const map = {};
   const poTotalMap = {};
 
@@ -466,7 +512,47 @@ function renderPartialTable(){
     const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : "-";
     const statusInfo = getStatusInfo(r);
 
-    td.innerHTML += `
+    tb.innerHTML += `
+  <tr>
+    <td>${r.nr || '-'}</td>
+    <td>${r.poNo || '-'}</td>
+    <td>${r.item || '-'}</td>
+    <td>${r.qty || 0}</td>
+    <td>${r.color || '-'}</td>
+    <td>${r.poIssueDate || '-'}</td>
+    <td>${r.factory || '-'}</td>
+    <td>${r.shipmentNo === 1 ? (r.shipmentQty || 0) : '-'}</td>
+    <td>${r.shipmentNo === 1 ? (r.schedule || '-') : '-'}</td>
+    <td>${r.shipmentNo === 2 ? (r.shipmentQty || 0) : '-'}</td>
+    <td>${r.shipmentNo === 2 ? (r.schedule || '-') : '-'}</td>
+    <td>${r.shipmentNo === 3 ? (r.shipmentQty || 0) : '-'}</td>
+    <td>${r.shipmentNo === 3 ? (r.schedule || '-') : '-'}</td>
+    <td>${r.shipmentQty || 0}</td>
+    <td>${r.etdVN || '-'}</td>
+    <td>${r.actual || '-'}</td>
+    <td>${r.delayDays || 0}</td>
+    <td>${r.reason || '-'}</td>
+  </tr>
+`;
+  });
+}
+
+function renderTable(){
+  const rows = groupDelayedPO();
+  const tb = document.getElementById("tb");
+  tb.innerHTML = "";
+
+  rows.forEach(r => {
+    const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : "-";
+    const s1Date = r.shipments[1] ? safeText(r.shipments[1].actual) : "-";
+
+    const s2Qty = r.shipments[2] ? fmt(r.shipments[2].shipmentQty) : "-";
+    const s2Date = r.shipments[2] ? safeText(r.shipments[2].actual) : "-";
+
+    const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : "-";
+    const s3Date = r.shipments[3] ? safeText(r.shipments[3].actual) : "-";
+
+    tb.innerHTML += `
       <tr>
         <td>${safeText(r.nr)}</td>
         <td>${safeText(r.poNo)}</td>
@@ -482,50 +568,14 @@ function renderPartialTable(){
         <td>${s3Qty}</td>
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
-        <td>${achievementRate === "-" ? "-" : achievementRate + "%"}</td>
         <td>${safeText(r.etdVN)}</td>
-        <td>${safeText(r.inboundPlan)}</td>
-        <td>${safeText(r.orderType)}</td>
-        <td class="${statusInfo.class}">
-  ${statusInfo.text}
-</td>
+        <td>${safeText(r.latestActual)}</td>
+        <td>${fmt(r.maxDelayDays)}</td>
+        <td>${safeText(r.delayReasonSummary)}</td>
       </tr>
     `;
   });
 }
-
-function renderTable(){
-  const rows = [...DATA]
-    .filter(x =>
-  x.poNo &&
-  x.item &&
-  (
-    x.delayDays > 0 ||
-    String(x.status || "").trim().toLowerCase() === "delayed"
-  )
-)
-    .sort((a, b) => b.delayDays - a.delayDays)
-    .slice(0, 10);
-
-  const tb = document.getElementById("tb");
-  tb.innerHTML = "";
-
-  rows.forEach(r => {
-    tb.innerHTML += `
-      <tr>
-        <td>${r.poNo}</td>
-        <td>${r.item}</td>
-        <td>${r.factory}</td>
-        <td>${r.shipmentQty}</td>
-        <td>${r.schedule}</td>
-        <td>${r.actual}</td>
-        <td>${r.delayDays}</td>
-        <td>${r.reason || '-'}</td>
-      </tr>
-    `;
-  });
-}
-
 async function loadCSV(){
   try{
     const response = await fetch(SHEET_CSV_URL);
