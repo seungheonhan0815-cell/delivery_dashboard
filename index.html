@@ -249,24 +249,15 @@ function getInboundStatus(dateStr){
     return { text:"진행중", class:"status-wip" };
   }
 }
-function getStatusInfo(status){
-  if (!status) return { text: "-", class: "" };
+function getStatusInfo(r){
+  const rate = r.total > 0 ? r.totalQty / r.total : 0;
 
-  const s = status.toLowerCase();
-
-  if (s === "on time") {
+  if (rate >= 1) {
     return { text: "완료", class: "status-ok" };
-  }
-  if (s === "in progress") {
+  } else {
     return { text: "진행중", class: "status-wip" };
   }
-  if (s === "delayed") {
-    return { text: "지연", class: "status-delay" };
-  }
-
-  return { text: "-", class: "" };
 }
-  
 function bar(container, data, color, suffix=""){
   const values = Object.values(data);
   if(!values.length){
@@ -473,7 +464,7 @@ function renderPartialTable(){
     const s3Date = r.shipments[3] ? safeText(r.shipments[3].actual) : "-";
 
     const achievementRate = r.qty ? ((r.totalQty / r.qty) * 100).toFixed(1) : "-";
-    const statusInfo = getStatusInfo(r.status);
+    const statusInfo = getStatusInfo(r);
 
     td.innerHTML += `
       <tr>
