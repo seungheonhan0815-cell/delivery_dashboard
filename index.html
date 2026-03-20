@@ -205,7 +205,24 @@ function uniqueCount(arr, key){
 function safeText(v){
   return v && String(v).trim() ? String(v).trim() : "-";
 }
+function parseDashDate(str){
+  const s = String(str || "").trim();
+  if (!s || s === "-") return null;
 
+  const cleaned = s.replace(/\./g, "-").replace(/\s+/g, "");
+  const parts = cleaned.split("-").filter(Boolean);
+
+  if (parts.length < 3) return null;
+
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const d = Number(parts[2]);
+
+  if (!y || !m || !d) return null;
+
+  return new Date(y, m - 1, d);
+}
+  
 function tReason(v){
   return REASON_KO[v] || v || "-";
 }
@@ -383,7 +400,16 @@ function groupDelayedPO(){
         delayReasonSummary: delayReasons.size ? [...delayReasons].join(", ") : "-"
       };
     })
-    .filter(r => r.maxDelayDays > 0 || r.totalQty < r.qty);
+    .filter(r => {
+  const etd = parseDashDate(r.etdVN);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const isIncomplete = r.totalQty < r.qty;
+  const isPastETD = etd && today > etd;
+
+  return isIncomplete && isPastETD;
+});
 }
 
 function renderKPI(){
