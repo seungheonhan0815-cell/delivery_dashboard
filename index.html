@@ -567,7 +567,7 @@ async function loadCSV(){
         partialReason: String(c[18] || "").trim(),
         status: String(c[19] || "").trim(),
       };
-    });.filter(x => x.poNo && x.item);
+    }).filter(x => x.poNo && x.item);
 
     renderKPI();
     renderFactory();
