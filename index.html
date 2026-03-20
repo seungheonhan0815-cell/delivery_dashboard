@@ -367,8 +367,7 @@ function groupPO(){
     partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(", ") : "-"
   }));
 }
-
-function groupDelayedPO(){
+  function groupDelayedPO(){
   return groupPO()
     .map(r => {
       const s1 = r.shipments[1];
@@ -391,6 +390,8 @@ function groupDelayedPO(){
         if (x && x.reason && x.reason !== "None") {
           delayReasons.add(tReason(x.reason));
         }
+
+
       });
 
       return {
@@ -405,10 +406,11 @@ function groupDelayedPO(){
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  const isActuallyDelayed = r.maxDelayDays > 0;
   const isIncomplete = r.totalQty < r.qty;
   const isPastETD = etd && today > etd;
 
-  return isIncomplete && isPastETD;
+  return isActuallyDelayed || (isIncomplete && isPastETD);
 });
 }
 
