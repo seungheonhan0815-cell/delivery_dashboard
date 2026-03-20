@@ -505,11 +505,11 @@ function renderMonth(){
   const container = document.getElementById("barMonth");
   container.innerHTML = "";
 
-  onst monthOrder = ["2025. 12", "2026. 1", "2026. 3"];
+  const monthOrder = ["2025. 12", "2026. 1", "2026. 3"];
 
-monthOrder.forEach(m => {
-  const actual = month[m] || 0;
-  const target = MONTH_TARGET[m] || 0;
+  monthOrder.forEach(m => {
+    const actual = month[m] || 0;
+    const target = MONTH_TARGET[m] || 0;
     const rateNum = target ? (actual / target * 100) : 0;
     const rateText = target ? rateNum.toFixed(1) : "-";
 
@@ -526,8 +526,8 @@ monthOrder.forEach(m => {
         </div>
       </div>
     `;
-  }
-});
+  });
+}
 
 function renderPartialTable(){
   const rows = groupPO();
