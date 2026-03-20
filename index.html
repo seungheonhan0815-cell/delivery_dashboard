@@ -586,6 +586,11 @@ function renderTable(){
     const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : "-";
     const s3Date = r.shipments[3] ? formatDate(r.shipments[3].actual) : "-";
 
+    const plannedDate =
+  r.shipments[1] ? safeText(r.shipments[1].schedule) :
+  r.shipments[2] ? safeText(r.shipments[2].schedule) :
+  r.shipments[3] ? safeText(r.shipments[3].schedule) : "-";
+
     tb.innerHTML += `
       <tr>
         <td>${safeText(r.nr)}</td>
@@ -602,7 +607,7 @@ function renderTable(){
         <td>${s3Qty}</td>
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
-        <td>${formatDate(r.etdVN)}</td>
+        <td>${plannedDate}</td>
         <td>${formatDate(r.latestActual)}</td>
         <td>${fmt(r.maxDelayDays)}</td>
         <td class="text-wrap">${safeText(r.delayReasonSummary)}</td>
