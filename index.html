@@ -418,9 +418,25 @@ function renderKPI(){
   const totalPO = uniqueCount(DATA, "poNo");
   const totalQty = DATA.reduce((s, x) => s + x.qty, 0);
 
-  const completed = DATA.filter(x => x.actual && x.actual !== "-");
-  const ontimeShipment = completed.filter(x => x.delayDays <= 0).length;
-  const totalShipment = completed.length;
+  const completed = groupPO().filter(r => {
+  const status = getStatusInfo(r);
+  return status.text !== "진행중";
+});
+  const ontimeShipment = completed.filter(x => {
+  const s1 = x.shipments[1];
+  const s2 = x.shipments[2];
+  const s3 = x.shipments[3];
+
+  const maxDelay = Math.max(
+    s1 ? Number(s1.delayDays || 0) : 0,
+    s2 ? Number(s2.delayDays || 0) : 0,
+    s3 ? Number(s3.delayDays || 0) : 0
+  );
+
+  return maxDelay <= 0;
+}).length;
+
+const totalShipment = completed.length;
 
   const delayPO = new Set(DATA.filter(x => x.delayDays > 0).map(x => x.poNo)).size;
   const delayPORate = totalPO ? ((delayPO / totalPO) * 100).toFixed(1) : "0.0";
