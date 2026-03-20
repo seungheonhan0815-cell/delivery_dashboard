@@ -506,9 +506,13 @@ function renderPartialTable(){
 function renderTable(){
   const rows = [...DATA]
     .filter(x =>
-      x.delayDays > 0 ||
-      String(x.status || "").trim().toLowerCase() === "delayed"
-    )
+  x.poNo &&
+  x.item &&
+  (
+    x.delayDays > 0 ||
+    String(x.status || "").trim().toLowerCase() === "delayed"
+  )
+)
     .sort((a, b) => b.delayDays - a.delayDays)
     .slice(0, 10);
 
@@ -563,7 +567,7 @@ async function loadCSV(){
         partialReason: String(c[18] || "").trim(),
         status: String(c[19] || "").trim(),
       };
-    });
+    });.filter(x => x.poNo && x.item);
 
     renderKPI();
     renderFactory();
