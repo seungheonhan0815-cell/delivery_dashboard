@@ -578,13 +578,13 @@ function renderTable(){
 
   rows.forEach(r => {
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : "-";
-    const s1Date = r.shipments[1] ? formatDate(r.shipments[1].schedule) : "-";
+    const s1Date = r.shipments[1] ? formatDate(r.shipments[1].actual) : "-";
 
     const s2Qty = r.shipments[2] ? fmt(r.shipments[2].shipmentQty) : "-";
-    const s2Date = r.shipments[2] ? formatDate(r.shipments[2].schedule) : "-";
+    const s2Date = r.shipments[2] ? formatDate(r.shipments[2].actual) : "-";
 
     const s3Qty = r.shipments[3] ? fmt(r.shipments[3].shipmentQty) : "-";
-    const s3Date = r.shipments[3] ? formatDate(r.shipments[3].schedule) : "-";
+    const s3Date = r.shipments[3] ? formatDate(r.shipments[3].actual) : "-";
 
     tb.innerHTML += `
       <tr>
