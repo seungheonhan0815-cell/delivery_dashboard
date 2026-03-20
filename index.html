@@ -125,12 +125,13 @@ th{background:#fafbff;position:sticky;top:0;}
         <thead>
           <tr>
             <th>PO</th>
-            <th>품목</th>
-            <th>수량</th>
-            <th>공장</th>
-            <th>계획일</th>
-            <th>실적일</th>
-            <th>지연</th>
+<th>품목</th>
+<th>공장</th>
+<th>수량</th>
+<th>계획일</th>
+<th>실적일</th>
+<th>지연</th>
+<th>지연사유</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
@@ -494,14 +495,14 @@ function renderTable(){
   rows.forEach(r => {
     tb.innerHTML += `
       <tr>
-        <td>${safeText(r.poNo)}</td>
-        <td>${safeText(r.shipmentNo)}차</td>
-        <td>${safeText(r.item)}</td>
-        <td>${fmt(r.shipmentQty)}</td>
-        <td>${safeText(r.factory)}</td>
-        <td>${safeText(r.schedule)}</td>
-        <td>${safeText(r.actual)}</td>
-        <td>${fmt(r.delayDays)}일</td>
+        <td>${r.poNo}</td>
+  <td>${r.item}</td>
+  <td>${r.factory}</td>
+  <td>${r.shipmentQty}</td>
+  <td>${r.schedule}</td>
+  <td>${r.actual}</td>
+  <td>${r.delayDays}</td>
+  <td>${r.delayReason || '-'}</td>
       </tr>
     `;
   });
