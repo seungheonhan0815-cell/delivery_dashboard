@@ -139,7 +139,6 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
             <th>3차 일정</th>
             <th>총 선적 수량</th>
             <th>선적 확약일</th>
-            <th>실제 선적일</th>
             <th>지연일수</th>
             <th>지연사유</th>
           </tr>
@@ -608,7 +607,6 @@ function renderTable(){
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
         <td>${plannedDate}</td>
-        <td>${formatDate(r.latestActual)}</td>
         <td>${fmt(r.maxDelayDays)}</td>
         <td class="text-wrap">${safeText(r.delayReasonSummary)}</td>
       </tr>
