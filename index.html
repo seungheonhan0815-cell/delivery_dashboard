@@ -110,7 +110,6 @@ th{background:#fafbff;position:sticky;top:0;}
             <th>ETD(VN)</th>
             <th>물류 입고 예정</th>
             <th>오더 구분</th>
-            <th>분할 선적 사유</th>
             <th>상태</th>
           </tr>
         </thead>
@@ -479,7 +478,6 @@ function renderPartialTable(){
         <td>${safeText(r.etdVN)}</td>
         <td>${safeText(r.inboundPlan)}</td>
         <td>${safeText(r.orderType)}</td>
-        <td class="text-wrap">${safeText(r.partialReasonSummary)}</td>
         <td class="${inboundStatus.class}">${inboundStatus.text}</td>
       </tr>
     `;
@@ -505,7 +503,6 @@ function renderTable(){
         <td>${safeText(r.factory)}</td>
         <td>${safeText(r.schedule)}</td>
         <td>${safeText(r.actual)}</td>
-        <td class="text-wrap">${safeText(tPartialReason(r.partialReason))}</td>
         <td>${fmt(r.delayDays)}일</td>
       </tr>
     `;
