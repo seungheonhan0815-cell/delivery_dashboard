@@ -259,15 +259,14 @@ function parseCSVLine(line) {
 }
 
 function parseNumber(value){
+  console.log("숫자 원본:", JSON.stringify(value));
+
   const cleaned = String(value ?? "")
     .replace(/[^\d.-]/g, "");
 
   const num = Number(cleaned);
   return Number.isFinite(num) ? num : 0;
-
-  console.log("숫자 원본:", JSON.stringify(value));
 }
-
 function formatDate(value){
   const str = String(value || "").trim();
   if (!str) return "-";
