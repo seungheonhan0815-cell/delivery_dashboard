@@ -636,26 +636,29 @@ async function loadCSV(){
 
     DATA = bodyRows.map(r => {
   const c = parseCSVLine(r);
-      if (String(c[2] || "").trim() === "3ASXM036NK0002") {
-  console.log("👉 문제 행 전체:", c);
-  console.log("👉 Qty:", c[5], "Shipment:", c[8], "Shipment QTY:", c[9]);
+
+  if (String(c[2] || "").trim() === "3ASXM036NK0002") {
+    console.log("👉 문제 행 전체:", c);
+    console.log("👉 Qty:", c[5], "Shipment:", c[8], "Shipment QTY:", c[9]);
+  }
+
   return {
     nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
     poNo: String(c[2] || "").trim(),
     item: String(c[3] || "").trim(),
-    factory: String(c[4] || "").trim(),        // E
-    qty: parseNumber(c[5]),                    // F
-    color: String(c[6] || "").trim(),          // G
-    poIssueDate: String(c[7] || "").trim(),    // H
-    shipmentNo: parseNumber(c[8]),             // I
-    shipmentQty: parseNumber(c[9]),            // J
-    schedule: String(c[10] || "").trim(),      // K
-    actual: String(c[11] || c[10] || "").trim(), // L
-    etdVN: String(c[12] || "").trim(),         // M
-    inboundPlan: String(c[13] || "").trim(),   // N
-    orderType: String(c[14] || "").trim(),     // O
-    reason: String(c[15] || "").trim(),        // P
-    delayDays: parseNumber(c[16])              // Q
+    factory: String(c[4] || "").trim(),
+    qty: parseNumber(c[5]),
+    color: String(c[6] || "").trim(),
+    poIssueDate: String(c[7] || "").trim(),
+    shipmentNo: parseNumber(c[8]),
+    shipmentQty: parseNumber(c[9]),
+    schedule: String(c[10] || "").trim(),
+    actual: String(c[11] || c[10] || "").trim(),
+    etdVN: String(c[12] || "").trim(),
+    inboundPlan: String(c[13] || "").trim(),
+    orderType: String(c[14] || "").trim(),
+    reason: String(c[15] || "").trim(),
+    delayDays: parseNumber(c[16])
   };
 }).filter(x => x.poNo && x.item);
 
