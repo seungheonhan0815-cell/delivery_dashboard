@@ -642,28 +642,28 @@ async function loadCSV(){
     const bodyRows = rows.slice(1);
 
     DATA = bodyRows.map(r => {
-      const c = parseCSVLine(r);
-      return {
-        nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
-        poNo: String(c[2] || "").trim(),
-        item: String(c[3] || "").trim(),
-        total: parseNumber(c[4]),
-        qty: parseNumber(c[5]),
-        color: String(c[6] || "").trim(),
-        poIssueDate: String(c[7] || "").trim(),
-        shipmentNo: parseNumber(c[8]),
-        shipmentQty: parseNumber(c[9]),
-        schedule: String(c[10] || "").trim(),
-        actual: String(c[11] || c[10] || "").trim(),
-        etdVN: String(c[12] || "").trim(),
-        inboundPlan: String(c[13] || "").trim(),
-        orderType: String(c[14] || "").trim(),
-        delayDays: parseNumber(c[15]),
-        factory: String(c[16] || "").trim(),
-        reason: String(c[17] || "").trim(),
-        partialReason: String(c[18] || "").trim()
-      };
-    }).filter(x => x.poNo && x.item);
+  const c = parseCSVLine(r);
+  return {
+    nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
+    poNo: String(c[2] || "").trim(),
+    item: String(c[3] || "").trim(),
+    factory: String(c[4] || "").trim(),       // E열 = 공장
+    qty: parseNumber(c[5]),                   // F열 = Qty
+    color: String(c[6] || "").trim(),         // G열
+    poIssueDate: String(c[7] || "").trim(),   // H열
+    shipmentNo: parseNumber(c[8]),            // I열
+    shipmentQty: parseNumber(c[9]),           // J열
+    schedule: String(c[10] || "").trim(),     // K열
+    actual: String(c[11] || c[10] || "").trim(), // L열
+    etdVN: String(c[12] || "").trim(),        // M열
+    inboundPlan: String(c[13] || "").trim(),  // N열
+    orderType: String(c[14] || "").trim(),    // O열
+    reason: String(c[15] || "").trim(),       // P열 = Delay Reason
+    delayDays: parseNumber(c[16]),            // Q열 = 지연 일수
+    total: parseNumber(c[17]),                // 필요 시 실제 total 컬럼 위치에 맞게 조정
+    partialReason: String(c[18] || "").trim() // 필요 시 실제 위치에 맞게 조정
+  };
+}).filter(x => x.poNo && x.item);
 
     renderKPI();
     renderFactory();
