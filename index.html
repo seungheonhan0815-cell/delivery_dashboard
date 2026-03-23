@@ -324,13 +324,6 @@ function bar(container, data, color, suffix=""){
 
 function groupPO(){
   const map = {};
-  const poTotalMap = {};
-
-  DATA.forEach(r => {
-    if (!poTotalMap[r.poNo] || poTotalMap[r.poNo] < r.total) {
-      poTotalMap[r.poNo] = r.total;
-    }
-  });
 
   DATA.forEach(r => {
     const key = `${r.poNo}__${r.color}`;
@@ -340,7 +333,6 @@ function groupPO(){
         nr: r.nr,
         poNo: r.poNo,
         item: r.item,
-        total: poTotalMap[r.poNo] || r.total,
         qty: r.qty,
         color: r.color,
         poIssueDate: r.poIssueDate,
@@ -349,23 +341,15 @@ function groupPO(){
         orderType: r.orderType,
         factory: r.factory,
         totalQty: 0,
-        shipments: {},
-        partialReasons: new Set()
+        shipments: {}
       };
     }
 
     map[key].totalQty += r.shipmentQty;
     map[key].shipments[r.shipmentNo] = r;
-
-    if(r.partialReason && r.partialReason !== "None") {
-      map[key].partialReasons.add(tPartialReason(r.partialReason));
-    }
   });
 
-  return Object.values(map).map(r => ({
-    ...r,
-    partialReasonSummary: r.partialReasons.size ? [...r.partialReasons].join(", ") : "-"
-  }));
+  return Object.values(map);
 }
   function groupDelayedPO(){
   return groupPO()
@@ -647,21 +631,19 @@ async function loadCSV(){
     nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
     poNo: String(c[2] || "").trim(),
     item: String(c[3] || "").trim(),
-    factory: String(c[4] || "").trim(),       // E열 = 공장
-    qty: parseNumber(c[5]),                   // F열 = Qty
-    color: String(c[6] || "").trim(),         // G열
-    poIssueDate: String(c[7] || "").trim(),   // H열
-    shipmentNo: parseNumber(c[8]),            // I열
-    shipmentQty: parseNumber(c[9]),           // J열
-    schedule: String(c[10] || "").trim(),     // K열
-    actual: String(c[11] || c[10] || "").trim(), // L열
-    etdVN: String(c[12] || "").trim(),        // M열
-    inboundPlan: String(c[13] || "").trim(),  // N열
-    orderType: String(c[14] || "").trim(),    // O열
-    reason: String(c[15] || "").trim(),       // P열 = Delay Reason
-    delayDays: parseNumber(c[16]),            // Q열 = 지연 일수
-    total: parseNumber(c[17]),                // 필요 시 실제 total 컬럼 위치에 맞게 조정
-    partialReason: String(c[18] || "").trim() // 필요 시 실제 위치에 맞게 조정
+    factory: String(c[4] || "").trim(),        // E
+    qty: parseNumber(c[5]),                    // F
+    color: String(c[6] || "").trim(),          // G
+    poIssueDate: String(c[7] || "").trim(),    // H
+    shipmentNo: parseNumber(c[8]),             // I
+    shipmentQty: parseNumber(c[9]),            // J
+    schedule: String(c[10] || "").trim(),      // K
+    actual: String(c[11] || c[10] || "").trim(), // L
+    etdVN: String(c[12] || "").trim(),         // M
+    inboundPlan: String(c[13] || "").trim(),   // N
+    orderType: String(c[14] || "").trim(),     // O
+    reason: String(c[15] || "").trim(),        // P
+    delayDays: parseNumber(c[16])              // Q
   };
 }).filter(x => x.poNo && x.item);
 
