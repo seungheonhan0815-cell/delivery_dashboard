@@ -264,6 +264,7 @@ function parseNumber(value){
     .replace(/"/g, "")
     .replace(/'/g, "")
     .replace(/\s/g, "")
+    .replace(/=/g, "")
     .trim();
 
   const num = Number(cleaned);
@@ -627,7 +628,7 @@ function renderTable(){
 
 async function loadCSV(){
   try{
-    const response = await fetch(SHEET_CSV_URL);
+    const response = await fetch(SHEET_CSV_URL + "&t=" + Date.now());
     const text = await response.text();
 
     const rows = text.replace(/\r/g, "").split("\n").filter(r => r.trim() !== "");
@@ -635,6 +636,9 @@ async function loadCSV(){
 
     DATA = bodyRows.map(r => {
   const c = parseCSVLine(r);
+      if (String(c[2] || "").trim() === "3ASXM036NK0002") {
+  console.log("👉 문제 행 전체:", c);
+  console.log("👉 Qty:", c[5], "Shipment:", c[8], "Shipment QTY:", c[9]);
   return {
     nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
     poNo: String(c[2] || "").trim(),
