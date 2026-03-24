@@ -46,6 +46,18 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
 .text-wrap{max-width:260px;white-space:normal;word-break:break-word;line-height:1.35;}
 .small{font-size:12px;color:var(--muted);}
 .table-wrap{overflow:auto;}
+.filter-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.filter-control{display:flex;align-items:center;gap:6px;}
+.filter-control select,
+.filter-control input{
+  padding:8px 10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  background:#fff;
+}
+.filter-control input{
+  min-width:220px;
+}
 @media (max-width:1100px){
   .kpis,.two{grid-template-columns:1fr 1fr;}
 }
@@ -87,7 +99,35 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
   </div>
 
   <div class="card">
-    <div class="card-title">PO별 선적 세부 사항</div>
+    <div class="card-title">필터</div>
+    <div class="filter-row">
+      <div class="filter-control">
+        <label for="factoryFilter" class="small">공장 선택</label>
+        <select id="factoryFilter">
+          <option value="전체">전체</option>
+        </select>
+      </div>
+
+      <div class="filter-control">
+        <label for="modelFilter" class="small">모델 선택</label>
+        <select id="modelFilter">
+          <option value="전체">전체</option>
+        </select>
+      </div>
+
+      <div class="filter-control">
+        <label for="searchKeyword" class="small">PO / 모델 검색</label>
+        <input
+          id="searchKeyword"
+          type="text"
+          placeholder="PO No. 또는 모델명 입력"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" id="partialTableTitle">PO별 선적 세부 사항</div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -119,51 +159,43 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
   </div>
 
   <div class="card">
-  <div class="card-title">필터</div>
-  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-    <label for="factoryFilter" class="small">공장 선택</label>
-    <select id="factoryFilter" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px;">
-      <option value="전체">전체</option>
-    </select>
+    <div class="card-title" id="delayTableTitle">PO별 지연 세부 사항</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>N&amp;R</th>
+            <th>PO No.</th>
+            <th>Item</th>
+            <th>PO Q'ty</th>
+            <th>Color</th>
+            <th>P/issue</th>
+            <th>Factory</th>
+            <th>1차 수량</th>
+            <th>1차 일정</th>
+            <th>2차 수량</th>
+            <th>2차 일정</th>
+            <th>3차 수량</th>
+            <th>3차 일정</th>
+            <th>총 선적 수량</th>
+            <th>선적 확약일</th>
+            <th>지연일수</th>
+            <th>지연사유</th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
   </div>
-</div>
-
-<div class="card">
-  <div class="card-title" id="delayTableTitle">PO별 지연 세부 사항</div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>N&amp;R</th>
-          <th>PO No.</th>
-          <th>Item</th>
-          <th>PO Q'ty</th>
-          <th>Color</th>
-          <th>P/issue</th>
-          <th>Factory</th>
-          <th>1차 수량</th>
-          <th>1차 일정</th>
-          <th>2차 수량</th>
-          <th>2차 일정</th>
-          <th>3차 수량</th>
-          <th>3차 일정</th>
-          <th>총 선적 수량</th>
-          <th>선적 확약일</th>
-          <th>지연일수</th>
-          <th>지연사유</th>
-        </tr>
-      </thead>
-      <tbody id="tb"></tbody>
-    </table>
-  </div>
-</div>
 
 </div>
 
 <script>
 let DATA = [];
 let STATUS = [];
-  let SELECTED_FACTORY = "전체";
+let SELECTED_FACTORY = "전체";
+let SELECTED_MODEL = "전체";
+let SEARCH_KEYWORD = "";
 
 const DETAIL_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&gid=1470488429";
 const STATUS_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&sheet=po_current_status";
@@ -211,13 +243,10 @@ function monthKey(date){
   return str;
 }
 
-function uniqueCount(arr, key){
-  return new Set(arr.map(x => x[key])).size;
-}
-
 function safeText(v){
   return v && String(v).trim() ? String(v).trim() : "-";
 }
+
 function parseDashDate(str){
   const s = String(str || "").trim();
   if (!s || s === "-") return null;
@@ -235,7 +264,7 @@ function parseDashDate(str){
 
   return new Date(y, m - 1, d);
 }
-  
+
 function tReason(v){
   return REASON_KO[v] || v || "-";
 }
@@ -272,20 +301,18 @@ function parseCSVLine(line) {
 }
 
 function parseNumber(value){
-  console.log("숫자 원본:", JSON.stringify(value));
-
-  const cleaned = String(value ?? "")
-    .replace(/[^\d.-]/g, "");
-
+  const cleaned = String(value ?? "").replace(/[^\d.-]/g, "");
   const num = Number(cleaned);
   return Number.isFinite(num) ? num : 0;
 }
+
 function formatDate(value){
   const str = String(value || "").trim();
   if (!str) return "-";
 
   if (/^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/.test(str)) return str;
   if (/^\d{1,2}\/\d{1,2}$/.test(str)) return str;
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
     const [y,m,d] = str.split("-");
     return `${y}. ${Number(m)}. ${Number(d)}`;
@@ -369,17 +396,13 @@ function groupPO(){
 
   return Object.values(map);
 }
-  function groupDelayedPO(){
+
+function groupDelayedPO(){
   return groupPO()
     .map(r => {
       const s1 = r.shipments[1];
       const s2 = r.shipments[2];
       const s3 = r.shipments[3];
-
-      const latestActual =
-        (s3 && s3.actual && s3.actual !== "-" ? s3.actual :
-        s2 && s2.actual && s2.actual !== "-" ? s2.actual :
-        s1 && s1.actual && s1.actual !== "-" ? s1.actual : "-");
 
       const maxDelayDays = Math.max(
         s1 ? Number(s1.delayDays || 0) : 0,
@@ -392,28 +415,46 @@ function groupPO(){
         if (x && x.reason && x.reason !== "None") {
           delayReasons.add(tReason(x.reason));
         }
-
-
       });
 
       return {
         ...r,
-        latestActual,
         maxDelayDays,
-        delayReasonSummary: delayReasons.size ? [...delayReasons].join(", ") : "-"
+        delayReasonSummary: delayReasons.size ? [...delayReasons].join(", ") : "사유 확인 필요"
       };
     })
     .filter(r => {
-  const etd = parseDashDate(r.etdVN);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+      const etd = parseDashDate(r.etdVN);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-  const isActuallyDelayed = r.maxDelayDays > 0;
-  const isIncomplete = r.totalQty < r.qty;
-  const isPastETD = etd && today > etd;
+      const isActuallyDelayed = r.maxDelayDays > 0;
+      const isIncomplete = r.totalQty < r.qty;
+      const isPastETD = etd && today > etd;
 
-  return isActuallyDelayed || (isIncomplete && isPastETD);
-});
+      return isActuallyDelayed || (isIncomplete && isPastETD);
+    });
+}
+
+function applyCommonFilters(rows){
+  let result = [...rows];
+
+  if (SELECTED_FACTORY !== "전체") {
+    result = result.filter(r => r.factory === SELECTED_FACTORY);
+  }
+
+  if (SELECTED_MODEL !== "전체") {
+    result = result.filter(r => r.item === SELECTED_MODEL);
+  }
+
+  if (SEARCH_KEYWORD) {
+    result = result.filter(r =>
+      String(r.poNo || "").toLowerCase().includes(SEARCH_KEYWORD) ||
+      String(r.item || "").toLowerCase().includes(SEARCH_KEYWORD)
+    );
+  }
+
+  return result;
 }
 
 function renderKPI(){
@@ -450,9 +491,6 @@ function renderKPI(){
     </div>
   `;
 }
- 
-
- 
 
 function renderFactory(){
   const delay = {};
@@ -465,23 +503,7 @@ function renderFactory(){
 
   bar(document.getElementById("barFactory"), delay, "#c62828");
 }
-  function renderFactoryFilter(){
-  const select = document.getElementById("factoryFilter");
-  if(!select) return;
 
-  const factories = [...new Set(DATA.map(x => x.factory).filter(Boolean))].sort();
-
-  select.innerHTML = `<option value="전체">전체</option>` +
-    factories.map(f => `<option value="${f}">${f}</option>`).join("");
-
-  select.value = SELECTED_FACTORY;
-
-  select.onchange = function(){
-    SELECTED_FACTORY = this.value;
-    renderPartialTable();
-    renderTable();
-  };
-}
 function renderFactoryRate(){
   const total = {};
   const delay = {};
@@ -500,6 +522,7 @@ function renderFactoryRate(){
 
   bar(document.getElementById("barFactoryRate"), rate, "#1565c0", "%");
 }
+
 function renderModel(){
   const model = {};
   groupDelayedPO().forEach(r => {
@@ -552,15 +575,71 @@ function renderMonth(){
   });
 }
 
-function renderPartialTable(){
+function renderFactoryFilter(){
+  const select = document.getElementById("factoryFilter");
+  if(!select) return;
+
+  const factories = [...new Set(DATA.map(x => x.factory).filter(Boolean))].sort();
+
+  select.innerHTML = `<option value="전체">전체</option>` +
+    factories.map(f => `<option value="${f}">${f}</option>`).join("");
+
+  select.value = SELECTED_FACTORY;
+
+  select.onchange = function(){
+    SELECTED_FACTORY = this.value;
+    renderPartialTable();
+    renderTable();
+  };
+}
+
+function renderModelFilter(){
+  const select = document.getElementById("modelFilter");
+  if(!select) return;
+
   let rows = groupPO();
 
-  if(SELECTED_FACTORY !== "전체"){
+  if (SELECTED_FACTORY !== "전체") {
     rows = rows.filter(r => r.factory === SELECTED_FACTORY);
   }
 
+  const models = [...new Set(rows.map(x => x.item).filter(Boolean))].sort();
+
+  select.innerHTML = `<option value="전체">전체</option>` +
+    models.map(m => `<option value="${m}">${m}</option>`).join("");
+
+  if (!models.includes(SELECTED_MODEL)) {
+    SELECTED_MODEL = "전체";
+  }
+
+  select.value = SELECTED_MODEL;
+
+  select.onchange = function(){
+    SELECTED_MODEL = this.value;
+    renderPartialTable();
+    renderTable();
+  };
+}
+
+function bindSearchFilter(){
+  const input = document.getElementById("searchKeyword");
+  if(!input) return;
+
+  input.value = SEARCH_KEYWORD;
+
+  input.oninput = function(){
+    SEARCH_KEYWORD = this.value.trim().toLowerCase();
+    renderPartialTable();
+    renderTable();
+  };
+}
+
+function renderPartialTable(){
+  let rows = applyCommonFilters(groupPO());
+
   const td = document.getElementById("partialTable");
   td.innerHTML = "";
+  document.getElementById("partialTableTitle").textContent = `PO별 선적 세부 사항 (${rows.length}건)`;
 
   rows.forEach(r => {
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : "-";
@@ -602,15 +681,12 @@ function renderPartialTable(){
 }
 
 function renderTable(){
-  let rows = groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays);
-
-  if(SELECTED_FACTORY !== "전체"){
-    rows = rows.filter(r => r.factory === SELECTED_FACTORY);
-  }
+  let rows = applyCommonFilters(
+    groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays)
+  );
 
   const tb = document.getElementById("tb");
   tb.innerHTML = "";
-
   document.getElementById("delayTableTitle").textContent = `PO별 지연 세부 사항 (${rows.length}건)`;
 
   rows.forEach(r => {
@@ -661,42 +737,36 @@ async function loadCSV(){
     const bodyRows = rows.slice(1);
 
     DATA = bodyRows.map(r => {
-  const c = parseCSVLine(r);
+      const c = parseCSVLine(r);
 
-  if (String(c[2] || "").trim() === "3ASXM036NK0002") {
-    console.log("👉 문제 행 전체:", c);
-    console.log("👉 Qty:", c[5], "Shipment:", c[8], "Shipment QTY:", c[9]);
-  }
+      return {
+        nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
+        poNo: String(c[2] || "").trim(),
+        item: String(c[3] || "").trim(),
+        factory: String(c[4] || "").trim(),
+        qty: parseNumber(c[5]),
+        color: String(c[6] || "").trim(),
+        poIssueDate: String(c[7] || "").trim(),
+        shipmentNo: parseNumber(c[8]),
+        shipmentQty: parseNumber(c[9]),
+        schedule: String(c[10] || "").trim(),
+        actual: String(c[11] || c[10] || "").trim(),
+        etdVN: String(c[12] || "").trim(),
+        inboundPlan: String(c[13] || "").trim(),
+        orderType: String(c[14] || "").trim(),
+        reason: String(c[15] || "").trim(),
+        delayDays: parseNumber(c[16])
+      };
+    }).filter(x => x.poNo && x.item);
 
-  return {
-    nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
-    poNo: String(c[2] || "").trim(),
-    item: String(c[3] || "").trim(),
-    factory: String(c[4] || "").trim(),
-    qty: parseNumber(c[5]),
-    color: String(c[6] || "").trim(),
-    poIssueDate: String(c[7] || "").trim(),
-    shipmentNo: parseNumber(c[8]),
-    shipmentQty: parseNumber(c[9]),
-    schedule: String(c[10] || "").trim(),
-    actual: String(c[11] || c[10] || "").trim(),
-    etdVN: String(c[12] || "").trim(),
-    inboundPlan: String(c[13] || "").trim(),
-    orderType: String(c[14] || "").trim(),
-    reason: String(c[15] || "").trim(),
-    delayDays: parseNumber(c[16])
-  };
-}).filter(x => x.poNo && x.item);
-
-    renderKPI();
-renderFactory();
-renderFactoryRate();
-renderModel();
-renderReason();
-renderMonth();
-renderFactoryFilter();
-renderPartialTable();
-renderTable();
+    renderModel();
+    renderReason();
+    renderMonth();
+    renderFactoryFilter();
+    renderModelFilter();
+    bindSearchFilter();
+    renderPartialTable();
+    renderTable();
 
   }catch(error){
     document.getElementById("kpiGrid").innerHTML = `
@@ -709,6 +779,7 @@ renderTable();
     console.error(error);
   }
 }
+
 async function loadStatusCSV(){
   try{
     const response = await fetch(STATUS_SHEET_CSV_URL + "&t=" + Date.now());
@@ -739,9 +810,10 @@ async function loadStatusCSV(){
     console.error("po_current_status 불러오기 실패:", error);
   }
 }
+
 async function init(){
-  await loadCSV();        // 기존 상세 데이터
-  await loadStatusCSV();  // 새 요약 데이터
+  await loadCSV();
+  await loadStatusCSV();
 }
 
 init();
