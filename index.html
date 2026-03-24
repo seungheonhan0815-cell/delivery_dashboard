@@ -64,6 +64,20 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
 @media (max-width:700px){
   .kpis,.two{grid-template-columns:1fr;}
 }
+  .highlight{
+  background:#fff3cd;
+  font-weight:bold;
+}
+.reset-btn{
+  padding:8px 12px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  background:#fff;
+  cursor:pointer;
+}
+.reset-btn:hover{
+  background:#f7f7f7;
+}
 </style>
 </head>
 <body>
@@ -123,6 +137,7 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
           placeholder="PO No. 또는 모델명 입력"
         />
       </div>
+      <button id="resetFilters" class="reset-btn">초기화</button>
     </div>
   </div>
 
@@ -246,7 +261,22 @@ function monthKey(date){
 function safeText(v){
   return v && String(v).trim() ? String(v).trim() : "-";
 }
+function highlightText(text){
+  const value = String(text || "");
+  if(!SEARCH_KEYWORD) return value;
 
+  const lower = value.toLowerCase();
+  const keyword = SEARCH_KEYWORD.toLowerCase();
+  const idx = lower.indexOf(keyword);
+
+  if(idx === -1) return value;
+
+  const before = value.slice(0, idx);
+  const match = value.slice(idx, idx + keyword.length);
+  const after = value.slice(idx + keyword.length);
+
+  return `${before}<span class="highlight">${match}</span>${after}`;
+}
 function parseDashDate(str){
   const s = String(str || "").trim();
   if (!s || s === "-") return null;
@@ -659,8 +689,8 @@ function renderPartialTable(){
     td.innerHTML += `
       <tr>
         <td>${safeText(r.nr)}</td>
-        <td>${safeText(r.poNo)}</td>
-        <td>${safeText(r.item)}</td>
+        <td>${highlightText(safeText(r.poNo))}</td>
+<td>${highlightText(safeText(r.item))}</td>
         <td>${fmt(r.qty)}</td>
         <td>${safeText(r.color)}</td>
         <td>${formatDate(r.poIssueDate)}</td>
@@ -681,7 +711,22 @@ function renderPartialTable(){
     `;
   });
 }
+function bindResetButton(){
+  const btn = document.getElementById("resetFilters");
+  if(!btn) return;
 
+  btn.onclick = function(){
+    SELECTED_FACTORY = "전체";
+    SELECTED_MODEL = "전체";
+    SEARCH_KEYWORD = "";
+
+    renderFactoryFilter();
+    renderModelFilter();
+    bindSearchFilter();
+    renderPartialTable();
+    renderTable();
+  };
+}
 function renderTable(){
   let rows = applyCommonFilters(
     groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays)
@@ -709,8 +754,8 @@ function renderTable(){
     tb.innerHTML += `
       <tr>
         <td>${safeText(r.nr)}</td>
-        <td>${safeText(r.poNo)}</td>
-        <td>${safeText(r.item)}</td>
+       <td>${highlightText(safeText(r.poNo))}</td>
+<td>${highlightText(safeText(r.item))}</td>
         <td>${fmt(r.qty)}</td>
         <td>${safeText(r.color)}</td>
         <td>${formatDate(r.poIssueDate)}</td>
@@ -762,13 +807,14 @@ async function loadCSV(){
     }).filter(x => x.poNo && x.item);
 
     renderModel();
-    renderReason();
-    renderMonth();
-    renderFactoryFilter();
-    renderModelFilter();
-    bindSearchFilter();
-    renderPartialTable();
-    renderTable();
+renderReason();
+renderMonth();
+renderFactoryFilter();
+renderModelFilter();
+bindSearchFilter();
+bindResetButton();
+renderPartialTable();
+renderTable();
 
   }catch(error){
     document.getElementById("kpiGrid").innerHTML = `
