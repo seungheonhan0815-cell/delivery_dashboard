@@ -728,7 +728,17 @@ function bindResetButton(){
     renderTable();
   };
 }
-  function downloadDelayCSV(){
+  function escapeCSV(value){
+  const text = String(value ?? "").replace(/"/g, '""');
+  return `"${text}"`;
+}
+
+function asExcelText(value){
+  const text = String(value ?? "").replace(/"/g, '""');
+  return `="${text}"`;
+}
+
+function downloadDelayCSV(){
   let rows = applyCommonFilters(
     groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays)
   );
@@ -743,25 +753,33 @@ function bindResetButton(){
     "Model",
     "Factory",
     "PO Qty",
-    "Total Shipped",
+    "Total Ship",
     "Planned Date",
     "Delay Days",
     "Delay Reason"
   ];
 
-  const csv = [
-    headers.join(","),
-    ...rows.map(r => [
-      `"${r.poNo}"`,
-      `"${r.item}"`,
-      `"${r.factory}"`,
+  const csvRows = rows.map(r => {
+    const plannedDate =
+      r.shipments[1]?.schedule ||
+      r.shipments[2]?.schedule ||
+      r.shipments[3]?.schedule ||
+      "";
+
+    return [
+      asExcelText(r.poNo),                 // 지수표기 방지
+      escapeCSV(r.item),
+      escapeCSV(r.factory),
       r.qty,
       r.totalQty,
-      `"${r.shipments[1]?.schedule || ""}"`,
+      escapeCSV(plannedDate),
       r.maxDelayDays,
-      `"${r.delayReasonSummary}"`
-    ].join(","))
-  ].join("\n");
+      escapeCSV(r.delayReasonSummary)
+    ].join(",");
+  });
+
+  const bom = "\uFEFF";
+  const csv = bom + [headers.join(","), ...csvRows].join("\r\n");
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -769,7 +787,9 @@ function bindResetButton(){
   const a = document.createElement("a");
   a.href = url;
   a.download = `delay_po_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 
   URL.revokeObjectURL(url);
 }
