@@ -439,38 +439,9 @@ function renderKPI(){
     </div>
   `;
 }
-  return maxDelay <= 0;
-}).length;
+ 
 
-const totalShipment = completed.length;
-
-  const delayPO = new Set(DATA.filter(x => x.delayDays > 0).map(x => x.poNo)).size;
-  const delayPORate = totalPO ? ((delayPO / totalPO) * 100).toFixed(1) : "0.0";
-  const otdRate = totalShipment ? ((ontimeShipment / totalShipment) * 100).toFixed(1) : "0.0";
-
-  document.getElementById("kpiGrid").innerHTML = `
-    <div class="card">
-      <div class="kpi-label">총 PO 수</div>
-      <div class="kpi-val">${fmt(totalPO)}</div>
-      <div class="kpi-sub">고유 PO 기준</div>
-    </div>
-    <div class="card">
-      <div class="kpi-label">총 수량</div>
-      <div class="kpi-val">${fmt(totalQty)}</div>
-      <div class="kpi-sub">전체 오더 수량</div>
-    </div>
-    <div class="card">
-      <div class="kpi-label">OTD</div>
-      <div class="kpi-val">${fmt(ontimeShipment)}건 / ${otdRate}%</div>
-      <div class="kpi-sub">선적 차수 기준</div>
-    </div>
-    <div class="card">
-      <div class="kpi-label">지연 PO</div>
-      <div class="kpi-val">${fmt(delayPO)}건 / ${delayPORate}%</div>
-      <div class="kpi-sub">고유 PO 기준</div>
-    </div>
-  `;
-}
+ 
 
 function renderFactory(){
   const delay = {};
