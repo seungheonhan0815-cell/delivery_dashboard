@@ -119,7 +119,7 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
   </div>
 
   <div class="card">
-    <div class="card-title">PO별 지연 세부 사항</div>
+    <div class="card-title" id="delayTableTitle">PO별 지연 세부 사항</div>
     <div class="table-wrap">
       <table>
         <thead>
@@ -569,9 +569,11 @@ function renderPartialTable(){
 }
 
 function renderTable(){
-  const rows = groupDelayedPO();
+  const rows = groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays);
   const tb = document.getElementById("tb");
   tb.innerHTML = "";
+
+  document.getElementById("delayTableTitle").textContent = `PO별 지연 세부 사항 (${rows.length}건)`;
 
   rows.forEach(r => {
     const s1Qty = r.shipments[1] ? fmt(r.shipments[1].shipmentQty) : "-";
@@ -584,9 +586,9 @@ function renderTable(){
     const s3Date = r.shipments[3] ? formatDate(r.shipments[3].actual) : "-";
 
     const plannedDate =
-  r.shipments[1] ? safeText(r.shipments[1].schedule) :
-  r.shipments[2] ? safeText(r.shipments[2].schedule) :
-  r.shipments[3] ? safeText(r.shipments[3].schedule) : "-";
+      r.shipments[1] ? safeText(r.shipments[1].schedule) :
+      r.shipments[2] ? safeText(r.shipments[2].schedule) :
+      r.shipments[3] ? safeText(r.shipments[3].schedule) : "-";
 
     tb.innerHTML += `
       <tr>
@@ -605,8 +607,8 @@ function renderTable(){
         <td>${s3Date}</td>
         <td>${fmt(r.totalQty)}</td>
         <td>${plannedDate}</td>
-        <td>${fmt(r.maxDelayDays)}</td>
-        <td class="text-wrap">${safeText(r.delayReasonSummary)}</td>
+        <td class="${r.maxDelayDays > 0 ? 'status-delay' : ''}">${fmt(r.maxDelayDays)}</td>
+        <td class="text-wrap ${r.maxDelayDays > 0 ? 'status-delay' : ''}">${safeText(r.delayReasonSummary)}</td>
       </tr>
     `;
   });
