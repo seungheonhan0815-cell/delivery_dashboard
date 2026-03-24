@@ -138,6 +138,7 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
         />
       </div>
       <button id="resetFilters" class="reset-btn">초기화</button>
+      <button id="downloadDelayCSV" class="reset-btn">지연 PO 다운로드</button>
     </div>
   </div>
 
@@ -727,6 +728,57 @@ function bindResetButton(){
     renderTable();
   };
 }
+  function downloadDelayCSV(){
+  let rows = applyCommonFilters(
+    groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays)
+  );
+
+  if(!rows.length){
+    alert("다운로드할 지연 데이터가 없습니다.");
+    return;
+  }
+
+  const headers = [
+    "PO No",
+    "Model",
+    "Factory",
+    "PO Qty",
+    "Total Shipped",
+    "Planned Date",
+    "Delay Days",
+    "Delay Reason"
+  ];
+
+  const csv = [
+    headers.join(","),
+    ...rows.map(r => [
+      `"${r.poNo}"`,
+      `"${r.item}"`,
+      `"${r.factory}"`,
+      r.qty,
+      r.totalQty,
+      `"${r.shipments[1]?.schedule || ""}"`,
+      r.maxDelayDays,
+      `"${r.delayReasonSummary}"`
+    ].join(","))
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `delay_po_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+  function bindDownloadButton(){
+  const btn = document.getElementById("downloadDelayCSV");
+  if(!btn) return;
+
+  btn.onclick = downloadDelayCSV;
+}
 function renderTable(){
   let rows = applyCommonFilters(
     groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays)
@@ -813,6 +865,7 @@ renderFactoryFilter();
 renderModelFilter();
 bindSearchFilter();
 bindResetButton();
+bindDownloadButton();
 renderPartialTable();
 renderTable();
 
