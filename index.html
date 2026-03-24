@@ -152,8 +152,10 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
 
 <script>
 let DATA = [];
+let STATUS = [];
 
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&gid=1470488429";
+const DETAIL_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&gid=1470488429";
+const STATUS_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&sheet=po_current_status";
 
 const MONTH_TARGET = {
   "2025. 12": 31870,
@@ -404,24 +406,39 @@ function groupPO(){
 }
 
 function renderKPI(){
-  const totalPO = uniqueCount(DATA, "poNo");
-  const totalQty = DATA.reduce((s, x) => s + x.qty, 0);
+  const totalPO = STATUS.length;
+  const totalQty = STATUS.reduce((s, x) => s + x.totalShippedQty, 0);
 
-  const completed = groupPO().filter(r => {
-  const status = getStatusInfo(r);
-  return status.text !== "진행중";
-});
-  const ontimeShipment = completed.filter(x => {
-  const s1 = x.shipments[1];
-  const s2 = x.shipments[2];
-  const s3 = x.shipments[3];
+  const completedPO = STATUS.filter(x => x.actualDate && x.actualDate !== "-").length;
+  const ontimePO = STATUS.filter(x => x.actualDate && x.actualDate !== "-" && x.delayFlag === "정상").length;
 
-  const maxDelay = Math.max(
-    s1 ? Number(s1.delayDays || 0) : 0,
-    s2 ? Number(s2.delayDays || 0) : 0,
-    s3 ? Number(s3.delayDays || 0) : 0
-  );
+  const delayPO = STATUS.filter(x => x.delayFlag === "지연").length;
+  const delayPORate = totalPO ? ((delayPO / totalPO) * 100).toFixed(1) : "0.0";
+  const otdRate = completedPO ? ((ontimePO / completedPO) * 100).toFixed(1) : "0.0";
 
+  document.getElementById("kpiGrid").innerHTML = `
+    <div class="card">
+      <div class="kpi-label">총 PO 수</div>
+      <div class="kpi-val">${fmt(totalPO)}</div>
+      <div class="kpi-sub">po_current_status 기준</div>
+    </div>
+    <div class="card">
+      <div class="kpi-label">총 선적 수량</div>
+      <div class="kpi-val">${fmt(totalQty)}</div>
+      <div class="kpi-sub">누적 선적 수량 기준</div>
+    </div>
+    <div class="card">
+      <div class="kpi-label">OTD</div>
+      <div class="kpi-val">${fmt(ontimePO)}건 / ${otdRate}%</div>
+      <div class="kpi-sub">실제 선적 완료 PO 기준</div>
+    </div>
+    <div class="card">
+      <div class="kpi-label">지연 PO</div>
+      <div class="kpi-val">${fmt(delayPO)}건 / ${delayPORate}%</div>
+      <div class="kpi-sub">po_current_status 기준</div>
+    </div>
+  `;
+}
   return maxDelay <= 0;
 }).length;
 
@@ -457,19 +474,22 @@ const totalShipment = completed.length;
 
 function renderFactory(){
   const delay = {};
-  groupDelayedPO().forEach(r => {
-    delay[r.factory] = (delay[r.factory] || 0) + 1;
-  });
+
+  STATUS
+    .filter(r => r.delayFlag === "지연")
+    .forEach(r => {
+      delay[r.factory] = (delay[r.factory] || 0) + 1;
+    });
+
   bar(document.getElementById("barFactory"), delay, "#c62828");
 }
-
 function renderFactoryRate(){
   const total = {};
   const delay = {};
 
-  DATA.forEach(r => {
+  STATUS.forEach(r => {
     total[r.factory] = (total[r.factory] || 0) + 1;
-    if(r.delayDays > 0){
+    if(r.delayFlag === "지연"){
       delay[r.factory] = (delay[r.factory] || 0) + 1;
     }
   });
@@ -481,7 +501,6 @@ function renderFactoryRate(){
 
   bar(document.getElementById("barFactoryRate"), rate, "#1565c0", "%");
 }
-
 function renderModel(){
   const model = {};
   groupDelayedPO().forEach(r => {
@@ -624,7 +643,7 @@ function renderTable(){
 
 async function loadCSV(){
   try{
-    const response = await fetch(SHEET_CSV_URL + "&t=" + Date.now());
+    const response = await fetch(DETAIL_SHEET_CSV_URL + "&t=" + Date.now());
     const text = await response.text();
 
     const rows = text.replace(/\r/g, "").split("\n").filter(r => r.trim() !== "");
@@ -678,8 +697,42 @@ async function loadCSV(){
     console.error(error);
   }
 }
+async function loadStatusCSV(){
+  try{
+    const response = await fetch(STATUS_SHEET_CSV_URL + "&t=" + Date.now());
+    const text = await response.text();
 
-loadCSV();
+    const rows = text.replace(/\r/g, "").split("\n").filter(r => r.trim() !== "");
+    const bodyRows = rows.slice(1);
+
+    STATUS = bodyRows.map(r => {
+      const c = parseCSVLine(r);
+
+      return {
+        poNo: String(c[0] || "").trim(),
+        modelName: String(c[1] || "").trim(),
+        factory: String(c[2] || "").trim(),
+        totalShippedQty: parseNumber(c[3]),
+        plannedDate: String(c[4] || "").trim(),
+        actualDate: String(c[5] || "").trim(),
+        delayFlag: String(c[6] || "").trim()
+      };
+    }).filter(x => x.poNo);
+
+    renderKPI();
+    renderFactory();
+    renderFactoryRate();
+
+  }catch(error){
+    console.error("po_current_status 불러오기 실패:", error);
+  }
+}
+async function init(){
+  await loadCSV();        // 기존 상세 데이터
+  await loadStatusCSV();  // 새 요약 데이터
+}
+
+init();
 </script>
 </body>
 </html>
