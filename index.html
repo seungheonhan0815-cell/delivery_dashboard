@@ -119,6 +119,15 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
   </div>
 
   <div class="card">
+    <div class="card">
+  <div class="card-title">필터</div>
+  <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <label for="factoryFilter" class="small">공장 선택</label>
+    <select id="factoryFilter" style="padding:8px 10px; border:1px solid #ddd; border-radius:8px;">
+      <option value="전체">전체</option>
+    </select>
+  </div>
+</div>
     <div class="card-title" id="delayTableTitle">PO별 지연 세부 사항</div>
     <div class="table-wrap">
       <table>
@@ -153,6 +162,7 @@ th{background:#fafbff;position:sticky;top:0;z-index:1;}
 <script>
 let DATA = [];
 let STATUS = [];
+  let SELECTED_FACTORY = "전체";
 
 const DETAIL_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&gid=1470488429";
 const STATUS_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&sheet=po_current_status";
@@ -454,6 +464,23 @@ function renderFactory(){
 
   bar(document.getElementById("barFactory"), delay, "#c62828");
 }
+  function renderFactoryFilter(){
+  const select = document.getElementById("factoryFilter");
+  if(!select) return;
+
+  const factories = [...new Set(DATA.map(x => x.factory).filter(Boolean))].sort();
+
+  select.innerHTML = `<option value="전체">전체</option>` +
+    factories.map(f => `<option value="${f}">${f}</option>`).join("");
+
+  select.value = SELECTED_FACTORY;
+
+  select.onchange = function(){
+    SELECTED_FACTORY = this.value;
+    renderPartialTable();
+    renderTable();
+  };
+}
 function renderFactoryRate(){
   const total = {};
   const delay = {};
@@ -525,7 +552,12 @@ function renderMonth(){
 }
 
 function renderPartialTable(){
-  const rows = groupPO();
+  let rows = groupPO();
+
+  if(SELECTED_FACTORY !== "전체"){
+    rows = rows.filter(r => r.factory === SELECTED_FACTORY);
+  }
+
   const td = document.getElementById("partialTable");
   td.innerHTML = "";
 
@@ -569,7 +601,12 @@ function renderPartialTable(){
 }
 
 function renderTable(){
-  const rows = groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays);
+  let rows = groupDelayedPO().sort((a, b) => b.maxDelayDays - a.maxDelayDays);
+
+  if(SELECTED_FACTORY !== "전체"){
+    rows = rows.filter(r => r.factory === SELECTED_FACTORY);
+  }
+
   const tb = document.getElementById("tb");
   tb.innerHTML = "";
 
@@ -651,13 +688,14 @@ async function loadCSV(){
 }).filter(x => x.poNo && x.item);
 
     renderKPI();
-    renderFactory();
-    renderFactoryRate();
-    renderModel();
-    renderReason();
-    renderMonth();
-    renderPartialTable();
-    renderTable();
+renderFactory();
+renderFactoryRate();
+renderModel();
+renderReason();
+renderMonth();
+renderFactoryFilter();
+renderPartialTable();
+renderTable();
 
   }catch(error){
     document.getElementById("kpiGrid").innerHTML = `
