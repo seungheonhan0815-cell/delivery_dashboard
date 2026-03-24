@@ -587,10 +587,12 @@ function renderFactoryFilter(){
   select.value = SELECTED_FACTORY;
 
   select.onchange = function(){
-    SELECTED_FACTORY = this.value;
-    renderPartialTable();
-    renderTable();
-  };
+  SELECTED_FACTORY = this.value;
+  SELECTED_MODEL = "전체";
+  renderModelFilter();
+  renderPartialTable();
+  renderTable();
+};
 }
 
 function renderModelFilter(){
