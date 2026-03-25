@@ -213,8 +213,8 @@ let SELECTED_FACTORY = "전체";
 let SELECTED_MODEL = "전체";
 let SEARCH_KEYWORD = "";
 
-const DETAIL_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&gid=1470488429";
-const STATUS_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1Irhb-aQqKlev_fchPyspqPu2QPr6dEyQ-PZf8RL3EUk/gviz/tq?tqx=out:csv&sheet=po_current_status";
+const DETAIL_SHEET_CSV_URL = "https://script.google.com/macros/s/AKfycbzIAy42dcmaV97vAr2i2SCschxiIs9g_1echCO496CC8-Sxc3pwx-p0YaGvURa6-WaAbg/exec";
+const STATUS_SHEET_CSV_URL = "https://script.google.com/macros/s/AKfycbzIAy42dcmaV97vAr2i2SCschxiIs9g_1echCO496CC8-Sxc3pwx-p0YaGvURa6-WaAbg/exec";
 
 const MONTH_TARGET = {
   "2025. 12": 31870,
@@ -849,89 +849,105 @@ function renderTable(){
 
 async function loadCSV(){
   try{
-    const response = await fetch(DETAIL_SHEET_CSV_URL + "&t=" + Date.now());
-    const text = await response.text();
+    const response = await fetch(DETAIL_SHEET_CSV_URL + "?t=" + Date.now());
+    const rows = await response.json();
 
-    const rows = text.replace(/\r/g, "").split("\n").filter(r => r.trim() !== "");
-    const bodyRows = rows.slice(1);
-
-    DATA = bodyRows.map(r => {
-      const c = parseCSVLine(r);
+    DATA = rows.map(r => {
+      const poQty = parseNumber(r["PO Qty"]);
+      const shipmentQty = parseNumber(r["Shipment QTY"]);
+      const shipmentNo = parseNumber(r["Partial Shipment order"]);
+      const plannedDate = String(r["Planned ship date"] || "").trim();
+      const actualDate = String(r["Actual ship date"] || "").trim();
 
       return {
-        nr: safeText(c[1]) === "-" ? "" : String(c[1] || "").trim(),
-        poNo: String(c[2] || "").trim(),
-        item: String(c[3] || "").trim(),
-        factory: String(c[4] || "").trim(),
-        qty: parseNumber(c[5]),
-        color: String(c[6] || "").trim(),
-        poIssueDate: String(c[7] || "").trim(),
-        shipmentNo: parseNumber(c[8]),
-        shipmentQty: parseNumber(c[9]),
-        schedule: String(c[10] || "").trim(),
-        actual: String(c[11] || c[10] || "").trim(),
-        etdVN: String(c[12] || "").trim(),
-        inboundPlan: String(c[13] || "").trim(),
-        orderType: String(c[14] || "").trim(),
-        reason: String(c[15] || "").trim(),
-        delayDays: parseNumber(c[16])
+        nr: "",
+        poNo: String(r["PO No."] || "").trim(),
+        item: String(r["Model name"] || "").trim(),
+        factory: String(r["Factory"] || "").trim(),
+        qty: poQty,
+        color: String(r["Color code"] || "").trim(),
+        poIssueDate: String(r["P/issue date"] || "").trim(),
+        shipmentNo: shipmentNo,
+        shipmentQty: shipmentQty,
+        schedule: plannedDate,
+        actual: actualDate || plannedDate,
+        etdVN: String(r["ETD(VN)"] || "").trim(),
+        inboundPlan: String(r["물류 입고 예정 일정"] || "").trim(),
+        orderType: String(r["New or Reorder"] || "").trim(),
+        reason: String(r["Delay Reason"] || "").trim(),
+        delayDays: parseNumber(r["지연 일수"])
       };
     }).filter(x => x.poNo && x.item);
 
     renderModel();
-renderReason();
-renderMonth();
-renderFactoryFilter();
-renderModelFilter();
-bindSearchFilter();
-bindResetButton();
-bindDownloadButton();
-renderPartialTable();
-renderTable();
+    renderReason();
+    renderMonth();
+    renderFactoryFilter();
+    renderModelFilter();
+    bindSearchFilter();
+    bindResetButton();
+    bindDownloadButton();
+    renderPartialTable();
+    renderTable();
 
   }catch(error){
     document.getElementById("kpiGrid").innerHTML = `
       <div class="card">
-        <div class="kpi-label">CSV 불러오기 실패</div>
-        <div class="kpi-val" style="font-size:18px">스프레드시트 연결을 확인하세요</div>
+        <div class="kpi-label">데이터 불러오기 실패</div>
+        <div class="kpi-val" style="font-size:18px">Apps Script 연결을 확인하세요</div>
         <div class="kpi-sub">GitHub Pages 반영 후 다시 새로고침 해주세요.</div>
       </div>
     `;
-    console.error(error);
+    console.error("상세 데이터 불러오기 실패:", error);
   }
 }
 
 async function loadStatusCSV(){
   try{
-    const response = await fetch(STATUS_SHEET_CSV_URL + "&t=" + Date.now());
-    const text = await response.text();
+    const response = await fetch(STATUS_SHEET_CSV_URL + "?t=" + Date.now());
+    const rows = await response.json();
 
-    const rows = text.replace(/\r/g, "").split("\n").filter(r => r.trim() !== "");
-    const bodyRows = rows.slice(1);
+    const latestMap = new Map();
 
-    STATUS = bodyRows.map(r => {
-      const c = parseCSVLine(r);
+    rows.forEach(r => {
+      const poNo = String(r["PO No."] || "").trim();
+      if (!poNo) return;
 
-      return {
-        poNo: String(c[0] || "").trim(),
-        modelName: String(c[1] || "").trim(),
-        factory: String(c[2] || "").trim(),
-        totalShippedQty: parseNumber(c[3]),
-        plannedDate: String(c[4] || "").trim(),
-        actualDate: String(c[5] || "").trim(),
-        delayFlag: String(c[6] || "").trim()
-      };
-    }).filter(x => x.poNo);
+      const shipmentQty = parseNumber(r["Shipment QTY"]);
+      const plannedDate = String(r["Planned ship date"] || "").trim();
+      const actualDate = String(r["Actual ship date"] || "").trim();
+      const delayDays = parseNumber(r["지연 일수"]);
+
+      if (!latestMap.has(poNo)) {
+        latestMap.set(poNo, {
+          poNo: poNo,
+          modelName: String(r["Model name"] || "").trim(),
+          factory: String(r["Factory"] || "").trim(),
+          totalShippedQty: 0,
+          plannedDate: plannedDate,
+          actualDate: actualDate,
+          delayFlag: delayDays > 0 ? "지연" : "정상"
+        });
+      }
+
+      const item = latestMap.get(poNo);
+      item.totalShippedQty += shipmentQty;
+
+      if (plannedDate) item.plannedDate = plannedDate;
+      if (actualDate) item.actualDate = actualDate;
+      if (delayDays > 0) item.delayFlag = "지연";
+    });
+
+    STATUS = Array.from(latestMap.values());
 
     renderKPI();
     renderFactory();
     renderFactoryRate();
 
   }catch(error){
-    console.error("po_current_status 불러오기 실패:", error);
+    console.error("상태 데이터 불러오기 실패:", error);
   }
 }
-
 async function init(){
   await loadCSV();
   await loadStatusCSV();
