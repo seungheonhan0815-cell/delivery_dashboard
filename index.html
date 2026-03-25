@@ -251,6 +251,18 @@ function monthKey(date){
     if (m) return `${m[1]}. ${Number(m[2])}`;
   }
 
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d)) {
+      return `${d.getFullYear()}. ${d.getMonth() + 1}`;
+    }
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [y, m] = str.split("-");
+    return `${y}. ${Number(m)}`;
+  }
+
   const parts = str.split("/");
   if (parts.length >= 2) {
     return `${parts[0]}월`;
@@ -258,7 +270,6 @@ function monthKey(date){
 
   return str;
 }
-
 function safeText(v){
   return v && String(v).trim() ? String(v).trim() : "-";
 }
@@ -344,6 +355,13 @@ function formatDate(value){
   if (/^\d{4}\.\s*\d{1,2}\.\s*\d{1,2}$/.test(str)) return str;
   if (/^\d{1,2}\/\d{1,2}$/.test(str)) return str;
 
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d)) {
+      return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
+    }
+  }
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
     const [y,m,d] = str.split("-");
     return `${y}. ${Number(m)}. ${Number(d)}`;
@@ -363,7 +381,6 @@ function formatDate(value){
 
   return str;
 }
-
 function getStatusInfo(r){
   const rate = r.qty > 0 ? (r.totalQty / r.qty) * 100 : 0;
   if (rate >= 100) {
@@ -819,9 +836,9 @@ function renderTable(){
     const s3Date = r.shipments[3] ? formatDate(r.shipments[3].actual) : "-";
 
     const plannedDate =
-      r.shipments[1] ? safeText(r.shipments[1].schedule) :
-      r.shipments[2] ? safeText(r.shipments[2].schedule) :
-      r.shipments[3] ? safeText(r.shipments[3].schedule) : "-";
+  r.shipments[1] ? formatDate(r.shipments[1].schedule) :
+  r.shipments[2] ? formatDate(r.shipments[2].schedule) :
+  r.shipments[3] ? formatDate(r.shipments[3].schedule) : "-";
 
     tb.innerHTML += `
       <tr>
@@ -860,7 +877,7 @@ async function loadCSV(){
       const actualDate = String(r["Actual ship date"] || "").trim();
 
       return {
-        nr: "",
+        nr: String(r["New or Reorder"] || "").trim(),
         poNo: String(r["PO No."] || "").trim(),
         item: String(r["Model name"] || "").trim(),
         factory: String(r["Factory"] || "").trim(),
@@ -877,7 +894,12 @@ async function loadCSV(){
         reason: String(r["Delay Reason"] || "").trim(),
         delayDays: parseNumber(r["지연 일수"])
       };
-    }).filter(x => x.poNo && x.item);
+    }).filter(x =>
+  x.poNo &&
+  x.item &&
+  x.poNo !== "PO No." &&
+  x.item !== "Model name"
+);
 
     renderModel();
     renderReason();
